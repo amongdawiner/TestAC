@@ -1,0 +1,4 @@
+To Consider : 
+--------------
+1. Changing Status of class while in certain status logically
+2. Registering subscriber in non existing or inactive class

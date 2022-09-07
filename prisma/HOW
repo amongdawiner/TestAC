@@ -1,0 +1,10 @@
+npm install prisma fastify-prisma-client
+npx prisma db pull
+npx prisma generate
+
+
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
+
+
+https://www.npmjs.com/package/prisma-offset-pagination

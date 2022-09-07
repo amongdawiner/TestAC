@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model accounts {
+  id                Int                 @id @default(autoincrement())
+  subscriber_id     Int?
+  main              Int?
+  class             String?             @db.VarChar(255)
+  created_at        DateTime            @default(now()) @db.Timestamp(0)
+  created_by        Int                 @db.UnsignedInt
+  authorized_at     DateTime?           @db.Timestamp(0)
+  authorized_by     Int?                @db.UnsignedInt
+  status            Int?
+  loan_applications loan_applications[]
+  transactions      transactions[]
+
+  @@index([authorized_by], map: "authby")
+  @@index([subscriber_id], map: "subscriber_id")
+  @@index([created_by], map: "user_idfk")
+}
+
+model audit_logs {
+  id                   Int       @id @default(autoincrement())
+  title                String?   @db.VarChar(255)
+  description          String?   @db.VarChar(255)
+  udid                 String?   @db.VarChar(255)
+  incident_description String?   @db.VarChar(255)
+  created_by           Int       @db.UnsignedInt
+  resolved_by          Int?      @db.UnsignedInt
+  reported_at          DateTime? @db.DateTime(0)
+  resolved_at          DateTime? @db.DateTime(0)
+  status               Int?
+
+  @@index([created_by], map: "createddby")
+  @@index([resolved_by], map: "resolvedby")
+}
+
+model devices {
+  id            Int          @id @default(autoincrement())
+  udid          String       @db.VarChar(255)
+  subscriber_id Int?
+  model         String?      @db.VarChar(255)
+  name          String?      @db.VarChar(255)
+  created_at    DateTime     @default(now()) @db.Timestamp(0)
+  created_by    Int          @db.UnsignedInt
+  authorized_at DateTime?    @db.Timestamp(0)
+  authorized_by Int?         @db.UnsignedInt
+  status        Int?
+  subscribers   subscribers? @relation(fields: [subscriber_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "devices_ibfk_1")
+
+  @@index([created_by], map: "createdby")
+  @@index([subscriber_id], map: "subscriber_id")
+}
+
+model floats {
+  id              Int       @id @default(autoincrement())
+  previous_amount Float?
+  current_amount  Float?
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+  created_by      Int       @db.UnsignedInt
+  authorized_at   DateTime? @db.Timestamp(0)
+  authorized_by   Int?      @db.UnsignedInt
+  status          Int?
+  users           users     @relation(fields: [id], references: [id], onDelete: Cascade, map: "authorized_by")
+
+  @@index([authorized_by], map: "authorized_by")
+  @@index([created_by], map: "createdby")
+}
+
+model incidents {
+  id                   Int       @id @default(autoincrement())
+  customer_id          String?   @db.VarChar(255)
+  udid                 String?   @db.VarChar(255)
+  transaction_id       String?   @db.VarChar(255)
+  incident_description String?   @db.VarChar(255)
+  created_by           Int       @db.UnsignedInt
+  resolved_by          Int?      @db.UnsignedInt
+  created_at           DateTime? @db.DateTime(0)
+  resolved_at          DateTime? @db.DateTime(0)
+  status               Int?
+
+  @@index([resolved_by], map: "resolved_by")
+}
+
+model limits {
+  id            Int       @id @default(autoincrement())
+  service_id    Int?
+  minimum       Float?    @default(1)
+  maximum       Float?
+  created_at    DateTime  @default(now()) @db.Timestamp(0)
+  created_by    Int       @db.UnsignedInt
+  authorized_at DateTime? @db.Timestamp(0)
+  authorized_by Int?      @db.UnsignedInt
+  status        Int?
+
+  @@index([authorized_by], map: "authorized_by")
+  @@index([created_by], map: "created_by")
+  @@index([service_id], map: "service_id")
+}
+
+model loan_applications {
+  id                       Int       @id @default(autoincrement())
+  account_id               Int
+  type                     String    @db.VarChar(200)
+  disbursed_amount         Float?    @default(0)
+  outstanding_amount       Float     @default(0)
+  paid_amount              Float     @default(0)
+  interest                 Float     @default(0)
+  duration                 Int       @default(1)
+  created_by               Int
+  created_at               DateTime  @db.DateTime(0)
+  first_level_approver     Int?
+  second_level_approver    Int?
+  first_level_approved_at  DateTime? @db.DateTime(0)
+  second_level_approved_at DateTime? @db.DateTime(0)
+  status                   String    @default("Pending") @db.VarChar(200)
+  accounts                 accounts  @relation(fields: [account_id], references: [id], onUpdate: Restrict, map: "loan_applications_ibfk_1")
+
+  @@index([created_by], map: "created_by")
+  @@index([first_level_approver], map: "first_level_approver")
+  @@index([second_level_approver], map: "second_level_approver")
+  @@index([account_id], map: "user_id")
+}
+
+model services {
+  id            Int            @id @default(autoincrement())
+  name          String?        @db.VarChar(255)
+  service_code  String?        @db.VarChar(255)
+  created_at    DateTime       @default(now()) @db.Timestamp(0)
+  created_by    Int            @db.UnsignedInt
+  authorized_at DateTime?      @db.Timestamp(0)
+  authorized_by Int?           @db.UnsignedInt
+  status        Int?
+  transactions  transactions[]
+}
+
+model subscriber_classes {
+  id                                            Int           @id @default(autoincrement())
+  name                                          String?       @db.VarChar(255)
+  created_at                                    DateTime      @default(now()) @db.Timestamp(0)
+  created_by                                    Int
+  authorized_at                                 DateTime?     @db.Timestamp(0)
+  authorized_by                                 Int?
+  status                                        String?       @default("Pending") @db.VarChar(255)
+  users_subscriber_classes_created_byTousers    users         @relation("subscriber_classes_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "subscriber_classes_ibfk_1")
+  users_subscriber_classes_authorized_byTousers users?        @relation("subscriber_classes_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "subscriber_classes_ibfk_2")
+  subscribers                                   subscribers[]
+
+  @@index([authorized_by], map: "authorized_by")
+  @@index([created_by], map: "created_by")
+}
+
+model subscribers {
+  id                 Int                 @id @default(autoincrement())
+  class_id           Int?
+  cif                String              @unique(map: "cif") @db.VarChar(255)
+  branch_code        String?             @db.VarChar(255)
+  preferred_language String?             @default("EN") @db.VarChar(255)
+  first_name         String              @db.VarChar(255)
+  phone_number       String              @unique(map: "phone_number") @db.VarChar(255)
+  imsi               String?             @db.VarChar(255)
+  email              String?             @db.VarChar(255)
+  created_at         DateTime            @default(now()) @db.Timestamp(0)
+  created_by         Int                 @db.UnsignedInt
+  authorized_at      DateTime?           @db.Timestamp(0)
+  authorized_by      Int?                @db.UnsignedInt
+  status             String?             @default("Pending") @db.VarChar(255)
+  middle_name        String?             @db.VarChar(255)
+  last_name          String              @db.VarChar(255)
+  password           String              @db.VarChar(255)
+  subscriber_classes subscriber_classes? @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "subscribers_ibfk_1")
+  devices            devices[]
+
+  @@index([class_id], map: "class_id")
+}
+
+model sys_logs_history {
+  id         Int      @id @default(autoincrement())
+  user_id    String   @db.VarChar(255)
+  ip_address String?  @db.VarChar(200)
+  pc_name    String?  @db.VarChar(200)
+  action     String?  @db.VarChar(200)
+  descr      String?  @db.Text
+  reg_date   DateTime @db.DateTime(0)
+}
+
+model transactions {
+  id                         Int       @id @default(autoincrement())
+  service_id                 Int?
+  account_id                 Int?
+  request_number             String    @unique(map: "request_number") @db.VarChar(255)
+  retrieval_reference_number String?   @unique(map: "retrieval_reference_number") @db.VarChar(255)
+  amount                     Float
+  destination                String?   @db.VarChar(255)
+  nature_of_transaction      String    @db.VarChar(255)
+  transaction_date           DateTime? @db.Date
+  narration                  String?   @db.VarChar(255)
+  created_at                 DateTime  @default(now()) @db.Timestamp(0)
+  created_by                 String?   @db.VarChar(255)
+  authorized_at              DateTime? @db.Timestamp(0)
+  authorized_by              String?   @db.VarChar(255)
+  status                     Int?
+  services                   services? @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_1")
+  accounts                   accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_2")
+
+  @@index([account_id], map: "account_id")
+  @@index([service_id], map: "service_id")
+}
+
+model users {
+  id                                                         Int                  @id @default(autoincrement())
+  first_name                                                 String?              @db.VarChar(255)
+  middle_name                                                String?              @db.VarChar(255)
+  last_name                                                  String?              @db.VarChar(255)
+  mobile                                                     Int?                 @unique(map: "mobile")
+  dob                                                        DateTime?            @db.Date
+  password                                                   String?              @db.VarChar(255)
+  role                                                       Int                  @default(1)
+  status                                                     String?              @default("Active") @db.VarChar(255)
+  created_at                                                 DateTime?            @default(now()) @db.DateTime(0)
+  floats                                                     floats?
+  subscriber_classes_subscriber_classes_created_byTousers    subscriber_classes[] @relation("subscriber_classes_created_byTousers")
+  subscriber_classes_subscriber_classes_authorized_byTousers subscriber_classes[] @relation("subscriber_classes_authorized_byTousers")
+}
