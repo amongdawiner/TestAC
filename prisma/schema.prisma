@@ -17,6 +17,8 @@ model accounts {
   authorized_at     DateTime?           @db.Timestamp(0)
   authorized_by     Int?                @db.UnsignedInt
   status            Int?
+  acccount_number   String              @unique(map: "acccount_number_UNIQUE") @db.VarChar(255)
+  subscribers       subscribers?        @relation(fields: [subscriber_id], references: [id], onDelete: Cascade, map: "subscriber_id")
   loan_applications loan_applications[]
   transactions      transactions[]
 
@@ -157,24 +159,26 @@ model subscriber_classes {
 }
 
 model subscribers {
-  id                 Int                 @id @default(autoincrement())
-  class_id           Int?
-  cif                String              @unique(map: "cif") @db.VarChar(255)
-  branch_code        String?             @db.VarChar(255)
-  preferred_language String?             @default("EN") @db.VarChar(255)
-  first_name         String              @db.VarChar(255)
-  phone_number       String              @unique(map: "phone_number") @db.VarChar(255)
-  imsi               String?             @db.VarChar(255)
-  email              String?             @db.VarChar(255)
-  created_at         DateTime            @default(now()) @db.Timestamp(0)
-  created_by         Int                 @db.UnsignedInt
-  authorized_at      DateTime?           @db.Timestamp(0)
-  authorized_by      Int?                @db.UnsignedInt
-  status             String?             @default("Pending") @db.VarChar(255)
-  middle_name        String?             @db.VarChar(255)
-  last_name          String              @db.VarChar(255)
-  password           String              @db.VarChar(255)
-  subscriber_classes subscriber_classes? @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "subscribers_ibfk_1")
+  id                 Int                @id @default(autoincrement())
+  class_id           Int
+  cif                String             @unique(map: "cif") @db.VarChar(255)
+  branch_code        String?            @db.VarChar(255)
+  preferred_language String?            @default("EN") @db.VarChar(255)
+  first_name         String             @db.VarChar(255)
+  phone_number       String             @unique(map: "phone_number") @db.VarChar(255)
+  imsi               String?            @db.VarChar(255)
+  email              String?            @db.VarChar(255)
+  created_at         DateTime           @default(now()) @db.Timestamp(0)
+  created_by         Int                @db.UnsignedInt
+  authorized_at      DateTime?          @db.Timestamp(0)
+  authorized_by      Int?               @db.UnsignedInt
+  status             String?            @default("Pending") @db.VarChar(255)
+  middle_name        String?            @db.VarChar(255)
+  last_name          String             @db.VarChar(255)
+  password           String             @db.VarChar(255)
+  is_otp_verified    Int                @default(0) @db.TinyInt
+  subscriber_classes subscriber_classes @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
+  accounts           accounts[]
   devices            devices[]
 
   @@index([class_id], map: "class_id")

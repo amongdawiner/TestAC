@@ -83,4 +83,9 @@ module.exports = async function (fastify, opts)
         return  fastify.DeactivateSubscriber({body:request.body, user:request.user})
       })
 
+      fastify.post('/GetSubscribers', { onRequest: [fastify.Authenticate] },  async function (request) 
+      {  
+        return  fastify.GetSubscribers({body:request.body, user:request.user})
+      })
+
 }

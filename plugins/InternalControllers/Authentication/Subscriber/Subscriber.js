@@ -20,6 +20,7 @@ module.exports = fp(async function (fastify, opts)
                 const hashedPassword = bcrypt.hashSync(otp, saltRounds);
                 let newSubscriber = 
                 {
+                  branch_code : request.body.branch_code,
                   cif : request.body.cif,
                   class_id : request.body.class_id,
                   first_name : request.body.first_name,
@@ -65,8 +66,53 @@ module.exports = fp(async function (fastify, opts)
     fastify.decorate("GetSubscribers", async function(request) {
       try 
       {
-          return prisma.subscribers.findMany({ where : { status : request.body.status }})
-      } catch (err) 
+        return prisma.subscribers.findMany(
+          { 
+            take: request.body.take != null ? request.body.take : undefined,
+            skip : request.body.skip != null ? request.body.skip : undefined,
+            cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
+            where : 
+            { 
+              phone_number : request.body.mobile != null ? request.body.mobile : undefined,
+              status : request.body.status != null ? request.body.status : undefined,
+              created_at : 
+              {
+                gte : request.body.start_date != null ? new Date(request.body.start_date) : undefined,
+                lte : request.body.end_date != null ? new Date(request.body.end_date) : undefined,
+              }
+            },
+            select :
+            {
+              id : true,
+              class_id : true,
+              cif : true,
+              branch_code : true,
+              preferred_language : true,
+              first_name : true,
+              phone_number : true,
+              imsi : true,
+              email : true,
+              created_at : true,
+              status : true,
+              middle_name : true,
+              last_name : true,
+              accounts : 
+              {
+                select: 
+                {
+                  acccount_number: true,
+                  main : true,
+                  class : true,
+                  status : true,
+                },
+              },
+            },
+          orderBy: 
+           {
+            id: 'desc',
+           }
+          })
+       } catch (err) 
       {
         return err
       }
