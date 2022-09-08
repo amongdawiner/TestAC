@@ -35,6 +35,8 @@ module.exports = fp(async function (fastify, opts)
                 }
 
                 let subscriber = await prisma.subscribers.create({data:newSubscriber })
+                fastify.log.info("OTP : ")
+                fastify.log.fatal(otp)
                 //send initial OTP for device registration /// for each new device
                 return {responseCode: "SUCCESS", message:"Subscriber Registered Successfully", subscriber : {name : subscriber.first_name+ " "+subscriber.last_name, phone_number:subscriber.phone_number}};
             }
@@ -51,12 +53,20 @@ module.exports = fp(async function (fastify, opts)
     {
       try 
       {
-          const subscriber = await prisma.subscribers.findFirst({where: {phone_number: request.phone_number}})
+          const subscriber = await prisma.subscribers.findFirst({where: {phone_number: request.phone_number, status:"Active"}})
           if(subscriber && await bcrypt.compareSync(request.password, subscriber.password))
           {
-              return {responseCode: "SUCCESS", message:"Successfully Authenticated", token : fastify.jwt.sign(subscriber)}
+              if(subscriber.is_otp_verified)
+              {
+                return {responseCode: "SUCCESS", message:"Successfully Authenticated", is_otp_verified:true, token : fastify.jwt.sign(subscriber)}
+              }
+              else 
+              {
+                return {responseCode: "SUCCESS", message:"Successfully Authenticated", is_otp_verified : false}
+              }
+              
           }
-          return {error: "Invalid Creds", message:"Invalid Credentials Provided"} 
+          return {responseCode: "INVALID_CREDS", message:"Invalid Credentials Provided or Inactive"} 
       } catch (err)
       {
         return err
@@ -134,7 +144,7 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Authorized", subscriber : {cif:update.cif, name : update.first_name+" "+update.last_name, mobile : update.phone_number, status : update.status}}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
@@ -156,7 +166,7 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Rejected", subscriber : {cif:update.cif, name : update.first_name+" "+update.last_name, mobile : update.phone_number, stats : update.status}}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
@@ -178,7 +188,7 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Deactivated", subscriber : {cif:update.cif, name : update.first_name+" "+update.last_name, mobile : update.phone_number, stats : update.status}}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
@@ -202,7 +212,7 @@ module.exports = fp(async function (fastify, opts)
                 created_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Activated", subscriber : {cif:update.cif, name : update.first_name+" "+update.last_name, mobile : update.phone_number, stats : update.status}}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }

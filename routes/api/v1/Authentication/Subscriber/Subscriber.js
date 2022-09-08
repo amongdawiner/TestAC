@@ -42,7 +42,7 @@ module.exports = async function (fastify, opts)
     
       fastify.post('/Authenticate', signInOptions, async function (request) 
       {
-        return fastify.AuthenticatePortalUser(request.body)
+        return fastify.AuthenticateSubscriber(request.body)
       })
     
       fastify.post('/Authenticated', { onRequest: [fastify.Authenticate] }, async function (request) 
@@ -63,6 +63,7 @@ module.exports = async function (fastify, opts)
         },
         onRequest: [fastify.Authenticate] 
       }
+
       fastify.post('/AuthorizeSubscriber', toggleSubscriberStatusOptions,  async function (request) 
       {  
         return  fastify.AuthorizeSubscriber({body:request.body, user:request.user})

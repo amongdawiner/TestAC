@@ -60,7 +60,7 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Authorized", subscriber : {class_id:update.class_id, name:update.name, status : update.status}}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
