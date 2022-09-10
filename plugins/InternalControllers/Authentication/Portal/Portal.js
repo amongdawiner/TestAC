@@ -32,9 +32,8 @@ module.exports = fp(async function (fastify, opts)
                 }
 
                 let user = await prisma.users.create({data:newUser })
-                let token = fastify.jwt.sign(user)
                 
-                return{token}
+                return {responseCode: "SUCCESS", message : "Portal User Registered Successfully", user : user}
             }
             else
             {

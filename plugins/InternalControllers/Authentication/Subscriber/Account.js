@@ -7,51 +7,50 @@ module.exports = fp(async function (fastify, opts)
     const { PrismaClient } = require('@prisma/client')
     const prisma = new PrismaClient()
 
-    fastify.decorate("AddSubscriberClass", async function(request) 
+    fastify.decorate("AddSubscriberAccount", async function(request) 
     {
       try {
-          let existingCount = await prisma.subscriber_classes.count(
-              {
-                where: {
-                  name: request.body.name
-                }
-              })
-
+            let existingCount = await prisma.accounts.count({ where: {acccount_number : request.body.account_number }})
             if(existingCount==0)
-            {
-              let newSubscriberClass = 
-              {
-                name : request.body.name,
-                created_by : request.user.id,
-              }
-              let subscriberClass = await prisma.subscriber_classes.create({data:newSubscriberClass })
-              return {responseCode: "SUCCESS", message : "Subscriber Class Added Successfully", class : subscriberClass}
+            { 
+                let newAccount =   
+                {
+                    created_by : request.user.id,
+                    main : request.body.is_main,
+                    class : request.body.class,
+                    subscriber_id : request.body.subscriber_id,
+                    acccount_number : request.body.account_number
+                }
+
+            let account = await prisma.accounts.create({data : newAccount})
+
+            return {responseCode: "SUCCESS", message : "Subscriber Account Added Successfully", account : account}
           }
           else
           {
-              return{responseCode : "DUPLICATE", error: "Duplicate Subscriber Class Details", message:"Subscriber Class Already Exist"};
+              return{responseCode : "DUPLICATE", error: "Duplicate Subscriber Account Details", message:"Subscriber Account Already Exist"};
           }
       } catch (err) {
         return err
       }
     })
 
-    fastify.decorate("GetSubscriberClasses", async function(request) {
+    fastify.decorate("GetSubscriberAccount", async function(request) {
       try {
-          return prisma.subscriber_classes.findMany()
+          return prisma.accounts.findMany()
       } catch (err) {
         return err
       }
     })
 
-    fastify.decorate("AuthorizeSubscriberClass", async function(request) {
+    fastify.decorate("AuthorizeSubscriberAccount", async function(request) {
       try 
       {
-        let update = await prisma.subscriber_classes.update(
+        let update = await prisma.accounts.update(
         {
               where:
               {
-                id: request.body.class_id,
+                id: request.body.account_id,
               },
               data: 
               {
@@ -60,20 +59,20 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return {responseCode: "SUCCESS", message:"Successfully Authorized", subscriber : {class_id:update.class_id, name:update.name, status : update.status}}
+        return {responseCode: "SUCCESS", message:"Successfully Authorized", account : update}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
     })
 
-    fastify.decorate("RejectSubscriberClass", async function(request) {
+    fastify.decorate("RejectSubscriberAccount", async function(request) {
       try 
       {
-        let update = await prisma.subscriber_classes.update(
+        let update = await prisma.accounts.update(
         {
               where:
               {
-                id : request.body.class_id
+                id : request.body.account_id
               },
               data: 
               {
@@ -82,20 +81,20 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return {responseCode: "SUCCESS", message:"Successfully Rejected", class : update}
+        return {responseCode: "SUCCESS", message:"Successfully Rejected", account : update}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
     })
 
-    fastify.decorate("DeactivateSubscriberClass", async function(request) {
+    fastify.decorate("DeactivateSubscriberAccount", async function(request) {
       try 
       {
-        let update = await prisma.subscriber_classes.update(
+        let update = await prisma.accounts.update(
         {
               where:
               {
-                id : request.body.class_id
+                id : request.body.account_id
               },
               data: 
               {
@@ -104,20 +103,20 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Deactivated", account : update}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
     })
 
-    fastify.decorate("ActivateSubscriberClass", async function(request) {
+    fastify.decorate("ActivateSubscriberAccount", async function(request) {
       try 
       {
-        let update = await prisma.subscriber_classes.update(
+        let update = await prisma.accounts.update(
         {
               where:
               {
-                id : request.body.class_id
+                id : request.body.account_id
               },
               data: 
               {
@@ -128,7 +127,7 @@ module.exports = fp(async function (fastify, opts)
                 created_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
               },
         })
-        return update;
+        return {responseCode: "SUCCESS", message:"Successfully Activated", account : update}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }

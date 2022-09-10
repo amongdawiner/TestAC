@@ -10,13 +10,13 @@ datasource db {
 model accounts {
   id                Int                 @id @default(autoincrement())
   subscriber_id     Int?
-  main              Int?
+  main              Int?                @default(0)
   class             String?             @db.VarChar(255)
   created_at        DateTime            @default(now()) @db.Timestamp(0)
   created_by        Int                 @db.UnsignedInt
   authorized_at     DateTime?           @db.Timestamp(0)
   authorized_by     Int?                @db.UnsignedInt
-  status            Int?
+  status            String?             @default("Pending") @db.VarChar(255)
   acccount_number   String              @unique(map: "acccount_number_UNIQUE") @db.VarChar(255)
   subscribers       subscribers?        @relation(fields: [subscriber_id], references: [id], onDelete: Cascade, map: "subscriber_id")
   loan_applications loan_applications[]
