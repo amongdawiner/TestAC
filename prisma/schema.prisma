@@ -132,16 +132,38 @@ model loan_applications {
   @@index([account_id], map: "user_id")
 }
 
+model service_providers {
+  id                                           Int      @id @default(autoincrement())
+  code                                         String   @unique(map: "code") @db.VarChar(255)
+  category                                     String   @db.VarChar(255)
+  service_id                                   Int
+  name                                         String   @db.VarChar(255)
+  logo                                         String   @db.Text
+  status                                       String   @default("Pending") @db.VarChar(255)
+  created_by                                   Int
+  created_at                                   DateTime @default(now()) @db.DateTime(0)
+  authorized_by                                Int
+  authorized_at                                Int
+  users_service_providers_authorized_byTousers users    @relation("service_providers_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_1")
+  users_service_providers_created_byTousers    users    @relation("service_providers_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_2")
+  services                                     services @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_3")
+
+  @@index([authorized_by], map: "authorized_by")
+  @@index([created_by], map: "created_by")
+  @@index([service_id], map: "service_id")
+}
+
 model services {
-  id            Int            @id @default(autoincrement())
-  name          String?        @db.VarChar(255)
-  service_code  String?        @db.VarChar(255)
-  created_at    DateTime       @default(now()) @db.Timestamp(0)
-  created_by    Int            @db.UnsignedInt
-  authorized_at DateTime?      @db.Timestamp(0)
-  authorized_by Int?           @db.UnsignedInt
-  status        Int?
-  transactions  transactions[]
+  id                Int                 @id @default(autoincrement())
+  name              String?             @db.VarChar(255)
+  service_code      String?             @db.VarChar(255)
+  created_at        DateTime            @default(now()) @db.Timestamp(0)
+  created_by        Int                 @db.UnsignedInt
+  authorized_at     DateTime?           @db.Timestamp(0)
+  authorized_by     Int?                @db.UnsignedInt
+  status            Int?
+  service_providers service_providers[]
+  transactions      transactions[]
 }
 
 model subscriber_classes {
@@ -178,7 +200,7 @@ model subscribers {
   middle_name        String?            @db.VarChar(255)
   last_name          String             @db.VarChar(255)
   password           String             @db.VarChar(255)
-  is_first_time_pin  Int                @default(0) @db.TinyInt
+  is_first_time_pin  Int                @default(1) @db.TinyInt
   subscriber_classes subscriber_classes @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
   accounts           accounts[]
   devices            devices[]
@@ -231,6 +253,8 @@ model users {
   status                                                     String?              @default("Active") @db.VarChar(255)
   created_at                                                 DateTime?            @default(now()) @db.DateTime(0)
   floats                                                     floats?
+  service_providers_service_providers_authorized_byTousers   service_providers[]  @relation("service_providers_authorized_byTousers")
+  service_providers_service_providers_created_byTousers      service_providers[]  @relation("service_providers_created_byTousers")
   subscriber_classes_subscriber_classes_created_byTousers    subscriber_classes[] @relation("subscriber_classes_created_byTousers")
   subscriber_classes_subscriber_classes_authorized_byTousers subscriber_classes[] @relation("subscriber_classes_authorized_byTousers")
 }
