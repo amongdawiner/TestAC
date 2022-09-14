@@ -31,10 +31,13 @@ module.exports = async function (fastify, opts)
         schema: {
           body: {
             type: 'object',
-            required: ['mobile','password'],
+            required: ['mobile','password','udid', 'device_name','device_model'],
             properties: {
-              mobile: { type: 'integer', minimum:9 },
-              password: { type: 'string' },
+              mobile : { type: 'integer', minimum:9 },
+              password : { type: 'string' },
+              udid : { type: 'string' },
+              device_name : { type: 'string' },
+              device_model : { type: 'string' }
             },
           },
         },
@@ -44,8 +47,29 @@ module.exports = async function (fastify, opts)
       {
         return fastify.AuthenticateSubscriber(request.body)
       })
+
+
+      const ChangeSubscriberPasswordOptions = {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['mobile','old_password','new_password'],
+            properties: {
+              mobile: { type: 'integer', minimum:9 },
+              old_password: { type: 'string' },
+              new_password: { type: 'string' },
+            },
+          },
+        },
+      }
     
-      fastify.post('/Authenticated', { onRequest: [fastify.Authenticate] }, async function (request) 
+      fastify.post('/ChangeSubscriberPassword', ChangeSubscriberPasswordOptions, async function (request) 
+      {
+        return fastify.ChangeSubscriberPassword(request.body)
+      })
+
+    
+      fastify.post('/Authenticated', { onRequest: [fastify.AuthenticateAlternativeChannellsCustomer] }, async function (request) 
       {
           return request.user;
       })

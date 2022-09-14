@@ -37,7 +37,8 @@ module.exports = fp(async function (fastify, opts)
                 let subscriber = await prisma.subscribers.create({data:newSubscriber })
                 fastify.log.info("OTP : ")
                 fastify.log.fatal(otp)
-                //send initial OTP for device registration /// for each new device
+                //send initial OTP for customer mobile number verification , shall be qued in kafka.rabbitmq
+                //api for otp verification is missed
                 return {responseCode: "SUCCESS", message:"Subscriber Registered Successfully", subscriber : {name : subscriber.first_name+ " "+subscriber.last_name, phone_number:subscriber.phone_number}};
             }
             else
@@ -53,17 +54,75 @@ module.exports = fp(async function (fastify, opts)
     {
       try 
       {
-          const subscriber = await prisma.subscribers.findFirst({where: {phone_number: request.phone_number, status:"Active"}})
+          const subscriber = await prisma.subscribers.findFirst({where: {phone_number: request.mobile.toString(), status:"Active"}})
           if(subscriber && await bcrypt.compareSync(request.password, subscriber.password))
           {
-              if(subscriber.is_otp_verified)
+              if(!subscriber.is_first_time_pin)
               {
-                return {responseCode: "SUCCESS", message:"Successfully Authenticated", is_otp_verified:true, token : fastify.jwt.sign(subscriber)}
+                //check if device exist
+                let device = await prisma.devices.findFirst({where: {subscriber_id: subscriber.id, udid:request.udid, status:"Active"}})
+                if(device && device.is_otp_verified)
+                {
+                  //Successfully Authenticated, Pre-Data shall be fetched here ...
+                  return {responseCode: "SUCCESS", message:"Successfully Authenticated", is_first_time_pin:false, is_device_otp_verified:true, device : {name : device.name, model : device.model, udid : device.udid}, token : fastify.jwt.sign(subscriber), services : {}, service_providers :{}}
+                }
+                else if(device && !device.is_otp_verified)
+                {
+                  return {responseCode: "SUCCESS", message:"Successfully Authenticated, But Device is not Verified, Kindly Verify OTP that was previously sent to 255"+subscriber.phone_number, is_first_time_pin:false, is_device_otp_verified:false, device : {name : device.name, model : device.model, udid : device.udid}, token : fastify.jwt.sign(subscriber)}
+                }
+                else 
+                {
+                  //register device and send otp, subscriber will have to come back back to login ...
+                  let addNewDevice = fastify.AddSubscriberDevice({body:{udid : request.udid, name : request.device_name, model : request.device_model}, user:subscriber})
+                  return {responseCode: "SUCCESS", message:"OTP for Device Registration has been sent to +255"+subscriber.phone_number+",  Kindly Verify OTP", is_first_time_pin:false, is_device_otp_verified:false, device : {name : addNewDevice.name, model : addNewDevice.model, udid : addNewDevice.udid}}
+                }
               }
               else 
               {
-                return {responseCode: "SUCCESS", message:"Successfully Authenticated", is_otp_verified : false}
+                return {responseCode: "SUCCESS", message:"Successfully Authenticated, Please Change Your first PIN", is_first_time_pin : true}
               }
+              
+          }
+          return {responseCode: "INVALID_CREDS", message:"Invalid Credentials Provided or Inactive"} 
+      } catch (err)
+      {
+        return err
+      }
+    })
+
+    fastify.decorate("ChangeSubscriberPassword", async function(request)
+    {
+      try 
+      {
+          if(request.old_password == request.new_password)
+          {
+            return {responseCode: "BAD_PASSWORD", message:"Old and New Password are the Same, Kindly use different one"} 
+          }
+
+          const subscriber = await prisma.subscribers.findFirst({where: {phone_number: request.mobile.toString(), status:"Active"}})
+          if(subscriber && await bcrypt.compareSync(request.old_password, subscriber.password))
+          {
+            try 
+            {
+              const saltRounds = 10;
+              const hashedPassword = bcrypt.hashSync(request.new_password, saltRounds);
+
+              await prisma.subscribers.update(
+              {
+                    where:
+                    {
+                      id : subscriber.id
+                    },
+                    data: 
+                    {
+                      is_first_time_pin : 0,
+                      password : hashedPassword
+                    },
+              })
+              return {responseCode: "SUCCESS", message:"Successfully Changed your PIN", is_first_time_pin : false}
+            } catch (err) {
+              return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
+            }
               
           }
           return {responseCode: "INVALID_CREDS", message:"Invalid Credentials Provided or Inactive"} 

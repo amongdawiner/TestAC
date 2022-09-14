@@ -35,7 +35,7 @@ module.exports = fp(async function (fastify, opts)
       }
     })
 
-    fastify.decorate("GetSubscriberAccount", async function(request) {
+    fastify.decorate("GetSubscriberAccounts", async function(request) {
       try {
           return prisma.accounts.findMany()
       } catch (err) {

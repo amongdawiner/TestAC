@@ -3,3 +3,9 @@ To Consider :
 1. Changing Status of class while in certain status logically
 2. Registering subscriber in non existing or inactive class
 3. Adding Logs for action, from API gateway level or from core
+
+4. Setting IDs of portal user and subscriber to differ depending on starting number , e.g. subscriber start from 10000, while portal start from 4000, this will enhance foreign key constraint
+5.Each Transaction shall be validated with validity of UDID and user, as well as shall be middleware to check limit
+
+
+adding services and service providers

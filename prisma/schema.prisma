@@ -44,17 +44,19 @@ model audit_logs {
 }
 
 model devices {
-  id            Int          @id @default(autoincrement())
-  udid          String       @db.VarChar(255)
-  subscriber_id Int?
-  model         String?      @db.VarChar(255)
-  name          String?      @db.VarChar(255)
-  created_at    DateTime     @default(now()) @db.Timestamp(0)
-  created_by    Int          @db.UnsignedInt
-  authorized_at DateTime?    @db.Timestamp(0)
-  authorized_by Int?         @db.UnsignedInt
-  status        Int?
-  subscribers   subscribers? @relation(fields: [subscriber_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "devices_ibfk_1")
+  id              Int          @id @default(autoincrement())
+  udid            String       @db.VarChar(255)
+  subscriber_id   Int?
+  model           String?      @db.VarChar(255)
+  name            String?      @db.VarChar(255)
+  created_at      DateTime     @default(now()) @db.Timestamp(0)
+  created_by      Int          @db.UnsignedInt
+  authorized_at   DateTime?    @default(now()) @db.Timestamp(0)
+  authorized_by   Int?         @db.UnsignedInt
+  status          String?      @default("Active") @db.VarChar(255)
+  otp             String?      @db.VarChar(255)
+  is_otp_verified Int?         @default(0) @db.TinyInt
+  subscribers     subscribers? @relation(fields: [subscriber_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "devices_ibfk_1")
 
   @@index([created_by], map: "createdby")
   @@index([subscriber_id], map: "subscriber_id")
@@ -176,7 +178,7 @@ model subscribers {
   middle_name        String?            @db.VarChar(255)
   last_name          String             @db.VarChar(255)
   password           String             @db.VarChar(255)
-  is_otp_verified    Int                @default(0) @db.TinyInt
+  is_first_time_pin  Int                @default(0) @db.TinyInt
   subscriber_classes subscriber_classes @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
   accounts           accounts[]
   devices            devices[]
