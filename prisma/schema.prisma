@@ -133,20 +133,21 @@ model loan_applications {
 }
 
 model service_providers {
-  id                                           Int      @id @default(autoincrement())
-  code                                         String   @unique(map: "code") @db.VarChar(255)
-  category                                     String   @db.VarChar(255)
+  id                                           Int                        @id @default(autoincrement())
+  code                                         String                     @unique(map: "code") @db.VarChar(255)
+  category                                     service_providers_category @default(OTHERS)
   service_id                                   Int
-  name                                         String   @db.VarChar(255)
-  logo                                         String   @db.Text
-  status                                       String   @default("Pending") @db.VarChar(255)
+  name                                         String                     @db.VarChar(255)
+  common_name                                  String?                    @db.VarChar(255)
+  logo                                         String                     @db.VarChar(255)
+  status                                       String                     @default("Pending") @db.VarChar(255)
   created_by                                   Int
-  created_at                                   DateTime @default(now()) @db.DateTime(0)
+  created_at                                   DateTime                   @default(now()) @db.DateTime(0)
   authorized_by                                Int
-  authorized_at                                Int
-  users_service_providers_authorized_byTousers users    @relation("service_providers_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_1")
-  users_service_providers_created_byTousers    users    @relation("service_providers_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_2")
-  services                                     services @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_3")
+  authorized_at                                DateTime                   @default(now()) @db.DateTime(0)
+  users_service_providers_authorized_byTousers users                      @relation("service_providers_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_1")
+  users_service_providers_created_byTousers    users                      @relation("service_providers_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_2")
+  services                                     services                   @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_3")
 
   @@index([authorized_by], map: "authorized_by")
   @@index([created_by], map: "created_by")
@@ -154,16 +155,24 @@ model service_providers {
 }
 
 model services {
-  id                Int                 @id @default(autoincrement())
-  name              String?             @db.VarChar(255)
-  service_code      String?             @db.VarChar(255)
-  created_at        DateTime            @default(now()) @db.Timestamp(0)
-  created_by        Int                 @db.UnsignedInt
-  authorized_at     DateTime?           @db.Timestamp(0)
-  authorized_by     Int?                @db.UnsignedInt
-  status            Int?
-  service_providers service_providers[]
-  transactions      transactions[]
+  id                                  Int                 @id @default(autoincrement())
+  category                            services_category?  @default(OTHERS)
+  name                                String?             @db.VarChar(255)
+  common_name                         String?             @db.VarChar(255)
+  description                         String?             @db.VarChar(255)
+  code                                String?             @db.VarChar(255)
+  created_at                          DateTime            @default(now()) @db.Timestamp(0)
+  created_by                          Int
+  authorized_at                       DateTime?           @db.Timestamp(0)
+  authorized_by                       Int?
+  status                              String?             @db.VarChar(255)
+  users_services_authorized_byTousers users?              @relation("services_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "services_ibfk_1")
+  users_services_created_byTousers    users               @relation("services_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "services_ibfk_2")
+  service_providers                   service_providers[]
+  transactions                        transactions[]
+
+  @@index([authorized_by], map: "authorized_by")
+  @@index([created_by], map: "created_by")
 }
 
 model subscriber_classes {
@@ -255,6 +264,25 @@ model users {
   floats                                                     floats?
   service_providers_service_providers_authorized_byTousers   service_providers[]  @relation("service_providers_authorized_byTousers")
   service_providers_service_providers_created_byTousers      service_providers[]  @relation("service_providers_created_byTousers")
+  services_services_authorized_byTousers                     services[]           @relation("services_authorized_byTousers")
+  services_services_created_byTousers                        services[]           @relation("services_created_byTousers")
   subscriber_classes_subscriber_classes_created_byTousers    subscriber_classes[] @relation("subscriber_classes_created_byTousers")
   subscriber_classes_subscriber_classes_authorized_byTousers subscriber_classes[] @relation("subscriber_classes_authorized_byTousers")
+}
+
+enum services_category {
+  CASH_WITHDRAW      @map("CASH WITHDRAW")
+  BANK_FUND_TRANSFER @map("BANK FUND TRANSFER")
+  MNO_FUND_TRANSFER  @map("MNO FUND TRANSFER")
+  PAYMENTS
+  OTHERS
+}
+
+enum service_providers_category {
+  BANK
+  MNO
+  GOVERNMENT
+  TRAVEL
+  ELECTRICITY
+  OTHERS
 }
