@@ -8,19 +8,21 @@ datasource db {
 }
 
 model accounts {
-  id                Int                 @id @default(autoincrement())
-  subscriber_id     Int?
-  main              Int?                @default(0)
-  class             String?             @db.VarChar(255)
-  created_at        DateTime            @default(now()) @db.Timestamp(0)
-  created_by        Int                 @db.UnsignedInt
-  authorized_at     DateTime?           @db.Timestamp(0)
-  authorized_by     Int?                @db.UnsignedInt
-  status            String?             @default("Pending") @db.VarChar(255)
-  acccount_number   String              @unique(map: "acccount_number_UNIQUE") @db.VarChar(255)
-  subscribers       subscribers?        @relation(fields: [subscriber_id], references: [id], onDelete: Cascade, map: "subscriber_id")
-  loan_applications loan_applications[]
-  transactions      transactions[]
+  id                                  Int                 @id @default(autoincrement())
+  subscriber_id                       Int?
+  main                                Int?                @default(0)
+  class                               String?             @db.VarChar(255)
+  created_at                          DateTime            @default(now()) @db.Timestamp(0)
+  created_by                          Int
+  authorized_at                       DateTime?           @db.Timestamp(0)
+  authorized_by                       Int
+  status                              String?             @default("Pending") @db.VarChar(255)
+  acccount_number                     String              @unique(map: "acccount_number_UNIQUE") @db.VarChar(255)
+  users_accounts_created_byTousers    users               @relation("accounts_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "accounts_ibfk_1")
+  users_accounts_authorized_byTousers users               @relation("accounts_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "accounts_ibfk_2")
+  subscribers                         subscribers?        @relation(fields: [subscriber_id], references: [id], onDelete: Cascade, map: "subscriber_id")
+  loan_applications                   loan_applications[]
+  transactions                        transactions[]
 
   @@index([authorized_by], map: "authby")
   @@index([subscriber_id], map: "subscriber_id")
@@ -63,15 +65,18 @@ model devices {
 }
 
 model floats {
-  id              Int       @id @default(autoincrement())
-  previous_amount Float?
-  current_amount  Float?
-  created_at      DateTime  @default(now()) @db.Timestamp(0)
-  created_by      Int       @db.UnsignedInt
-  authorized_at   DateTime? @db.Timestamp(0)
-  authorized_by   Int?      @db.UnsignedInt
-  status          Int?
-  users           users     @relation(fields: [id], references: [id], onDelete: Cascade, map: "authorized_by")
+  id                                Int       @id @default(autoincrement())
+  previous_amount                   Float
+  current_amount                    Float
+  previous_balance                  Float
+  current_balance                   Float
+  created_at                        DateTime  @default(now()) @db.Timestamp(0)
+  created_by                        Int
+  authorized_at                     DateTime? @db.Timestamp(0)
+  authorized_by                     Int?
+  status                            String?   @default("Pending") @db.VarChar(255)
+  users_floats_authorized_byTousers users?    @relation("floats_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Cascade, map: "authorized_by")
+  users_floats_created_byTousers    users     @relation("floats_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "floats_ibfk_1")
 
   @@index([authorized_by], map: "authorized_by")
   @@index([created_by], map: "createdby")
@@ -93,19 +98,27 @@ model incidents {
 }
 
 model limits {
-  id            Int       @id @default(autoincrement())
-  service_id    Int?
-  minimum       Float?    @default(1)
-  maximum       Float?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  created_by    Int       @db.UnsignedInt
-  authorized_at DateTime? @db.Timestamp(0)
-  authorized_by Int?      @db.UnsignedInt
-  status        Int?
+  id                                Int                @id @default(autoincrement())
+  subscriber_class_id               Int
+  service_id                        Int?
+  daily_limit                       Float?
+  weekly_limit                      Float?
+  monthly_limit                     Float?
+  yearly_limit                      Float?
+  created_at                        DateTime           @default(now()) @db.Timestamp(0)
+  created_by                        Int
+  authorized_at                     DateTime?          @db.Timestamp(0)
+  authorized_by                     Int?
+  status                            String?            @default("Pending") @db.VarChar(255)
+  services                          services?          @relation(fields: [service_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "limits_ibfk_1")
+  subscriber_classes                subscriber_classes @relation(fields: [subscriber_class_id], references: [id], onUpdate: Restrict, map: "limits_ibfk_2")
+  users_limits_created_byTousers    users              @relation("limits_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "limits_ibfk_3")
+  users_limits_authorized_byTousers users?             @relation("limits_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "limits_ibfk_4")
 
   @@index([authorized_by], map: "authorized_by")
   @@index([created_by], map: "created_by")
   @@index([service_id], map: "service_id")
+  @@index([subscriber_class_id], map: "subscriber_class_id")
 }
 
 model loan_applications {
@@ -135,6 +148,7 @@ model loan_applications {
 model service_providers {
   id                                           Int                        @id @default(autoincrement())
   code                                         String                     @unique(map: "code") @db.VarChar(255)
+  swift_code                                   String?                    @db.VarChar(25)
   category                                     service_providers_category @default(OTHERS)
   service_id                                   Int
   name                                         String                     @db.VarChar(255)
@@ -168,6 +182,7 @@ model services {
   status                              String?             @db.VarChar(255)
   users_services_authorized_byTousers users?              @relation("services_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "services_ibfk_1")
   users_services_created_byTousers    users               @relation("services_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "services_ibfk_2")
+  limits                              limits[]
   service_providers                   service_providers[]
   transactions                        transactions[]
 
@@ -185,6 +200,7 @@ model subscriber_classes {
   status                                        String?       @default("Pending") @db.VarChar(255)
   users_subscriber_classes_created_byTousers    users         @relation("subscriber_classes_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "subscriber_classes_ibfk_1")
   users_subscriber_classes_authorized_byTousers users?        @relation("subscriber_classes_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "subscriber_classes_ibfk_2")
+  limits                                        limits[]
   subscribers                                   subscribers[]
 
   @@index([authorized_by], map: "authorized_by")
@@ -261,7 +277,12 @@ model users {
   role                                                       Int                  @default(1)
   status                                                     String?              @default("Active") @db.VarChar(255)
   created_at                                                 DateTime?            @default(now()) @db.DateTime(0)
-  floats                                                     floats?
+  accounts_accounts_created_byTousers                        accounts[]           @relation("accounts_created_byTousers")
+  accounts_accounts_authorized_byTousers                     accounts[]           @relation("accounts_authorized_byTousers")
+  floats_floats_authorized_byTousers                         floats[]             @relation("floats_authorized_byTousers")
+  floats_floats_created_byTousers                            floats[]             @relation("floats_created_byTousers")
+  limits_limits_created_byTousers                            limits[]             @relation("limits_created_byTousers")
+  limits_limits_authorized_byTousers                         limits[]             @relation("limits_authorized_byTousers")
   service_providers_service_providers_authorized_byTousers   service_providers[]  @relation("service_providers_authorized_byTousers")
   service_providers_service_providers_created_byTousers      service_providers[]  @relation("service_providers_created_byTousers")
   services_services_authorized_byTousers                     services[]           @relation("services_authorized_byTousers")
