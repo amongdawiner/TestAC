@@ -7,51 +7,82 @@ module.exports = fp(async function (fastify, opts)
     const { PrismaClient } = require('@prisma/client')
     const prisma = new PrismaClient()
 
-    fastify.decorate("AddSubscriberLimit", async function(request) 
+    fastify.decorate("AddLimit", async function(request) 
     {
-      try {
-          let existingCount = await prisma.subscriber_classes.count(
-              {
-                where: {
-                  name: request.body.name
-                }
-              })
-
-            if(existingCount==0)
+      try 
+      {
+        let existingCount = await prisma.limits.count({where: {status: 'Pending', service_id:request.body.service_id, subscriber_class_id: request.body.subscriber_class_id}})
+        if(existingCount==0)
+        {
+            let newLimit = 
             {
-              let newSubscriberLimit = 
-              {
-                name : request.body.name,
-                created_by : request.user.id,
-              }
-              let SubscriberLimit = await prisma.subscriber_classes.create({data:newSubscriberLimit })
-              return {responseCode: "SUCCESS", message : "Subscriber Class Added Successfully", class : SubscriberLimit}
+                subscriber_class_id : request.body.subscriber_class_id,
+                service_id    : request.body.service_id,
+                daily_limit   : request.body.daily_limit,
+                weekly_limit  : request.body.weekly_limit != null ? request.body.weekly_limit :  request.body.daily_limit*7,
+                monthly_limit : request.body.monthly_limit != null ? request.body.monthly_limit :  request.body.daily_limit*30,
+                yearly_limit  : request.body.yearly_limit != null ? request.body.yearly_limit :  request.body.daily_limit*365,
+                created_by    : request.user.id,
+            }
+            let Limit = await prisma.limits.create({data:newLimit })
+            return {responseCode: "SUCCESS", message : "New Limit Added Successfully", Limit : Limit}
           }
           else
           {
-              return{responseCode : "DUPLICATE", error: "Duplicate Subscriber Class Details", message:"Subscriber Class Already Exist"};
+              return{responseCode : "UNATTENDED_PENDING", error: "There is a Pending Limit", message:"Kindly request Authorizer to Authorize or Reject Latest Limit Request"};
           }
       } catch (err) {
         return err
       }
     })
 
-    fastify.decorate("GetSubscriberLimites", async function(request) {
-      try {
-          return prisma.subscriber_classes.findMany()
-      } catch (err) {
-        return err
-      }
-    })
+    fastify.decorate("GetLimits", async function(request) {
+        try 
+        {
+          return prisma.limits.findMany(
+            { 
+              take: request.body.take != null ? request.body.take : undefined,
+              skip : request.body.skip != null ? request.body.skip : undefined,
+              cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
+              where : 
+              { 
+                subscriber_class_id : request.body.subscriber_class_id != null ? request.body.subscriber_class_id : undefined,
+                service_id : request.body.service_id != null ? request.body.service_id : undefined,
+                status : request.body.status != null ? request.body.status : undefined,
+                created_at : 
+                {
+                  gte : request.body.start_date != null ? new Date(request.body.start_date) : undefined,
+                  lte : request.body.end_date != null ? new Date(request.body.end_date) : undefined,
+                }
+              },
+            orderBy: 
+             {
+              id: 'desc',
+             }
+            })
+         } catch (err) 
+        {
+          return err
+        }
+      })
+  
 
-    fastify.decorate("AuthorizeSubscriberLimit", async function(request) {
+    fastify.decorate("AuthorizeLimit", async function(request) {
       try 
       {
-        let update = await prisma.subscriber_classes.update(
+
+        let thisRecord = await prisma.limits.findFirst({where: {status: 'Pending', id:request.body.limit_id,}})
+
+        if(thisRecord == null)
+        {
+             return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.limit_id, rowsAffected : 0}
+        }
+
+        let update = await prisma.limits.update(
         {
               where:
               {
-                id: request.body.class_id,
+                id: request.body.limit_id,
               },
               data: 
               {
@@ -60,77 +91,38 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return {responseCode: "SUCCESS", message:"Successfully Authorized", subscriber : {class_id:update.class_id, name:update.name, status : update.status}}
+        return {responseCode: "SUCCESS", message: "Successfully Authorized", limit : update}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
     })
 
-    fastify.decorate("RejectSubscriberLimit", async function(request) {
-      try 
-      {
-        let update = await prisma.subscriber_classes.update(
+    fastify.decorate("RejectLimit", async function(request) {
+        try 
         {
-              where:
-              {
-                id : request.body.class_id
-              },
-              data: 
-              {
-                status: 'Rejected',
-                authorized_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
-                authorized_by : request.user.id
-              },
-        })
-        return {responseCode: "SUCCESS", message:"Successfully Rejected", class : update}
-      } catch (err) {
-        return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
-      }
-    })
-
-    fastify.decorate("DeactivateSubscriberLimit", async function(request) {
-      try 
-      {
-        let update = await prisma.subscriber_classes.update(
-        {
-              where:
-              {
-                id : request.body.class_id
-              },
-              data: 
-              {
-                status: 'Inactive',
-                authorized_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
-                authorized_by : request.user.id
-              },
-        })
-        return update;
-      } catch (err) {
-        return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
-      }
-    })
-
-    fastify.decorate("ActivateSubscriberLimit", async function(request) {
-      try 
-      {
-        let update = await prisma.subscriber_classes.update(
-        {
-              where:
-              {
-                id : request.body.class_id
-              },
-              data: 
-              {
-                status: 'Pending',
-                authorized_at : null,
-                authorized_by : null,
-                created_by : request.user.id,
-                created_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
-              },
-        })
-        return update;
-      } catch (err) {
-        return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
-      }
-    })
+          let thisRecord = await prisma.limits.findFirst({where: {status: 'Pending', id:request.body.limit_id,}})
+  
+          if(thisRecord == null)
+          {
+               return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.limit_id, rowsAffected : 0}
+          }
+  
+          let update = await prisma.limits.update(
+          {
+                where:
+                {
+                  id: request.body.limit_id,
+                },
+                data: 
+                {
+                  status: 'Rejected',
+                  authorized_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
+                  authorized_by : request.user.id
+                },
+          })
+          return {responseCode: "SUCCESS", message: "Successfully Rejected", limit : update}
+        } catch (err) {
+          return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
+        }
+      })
 })

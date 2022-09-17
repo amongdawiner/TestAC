@@ -29,7 +29,7 @@ module.exports = fp(async function (fastify, opts)
           }
           else
           {
-              return{responseCode : "UNATTENDED_PENDING", error: "There is Pending Float", message:"Kindly request Authorize to Authorize or Reject Latest Float Request"};
+              return{responseCode : "UNATTENDED_PENDING", error: "There is a Pending Float", message:"Kindly request Authorizer to Authorize or Reject Latest Float Request"};
           }
       } catch (err) {
         return err
