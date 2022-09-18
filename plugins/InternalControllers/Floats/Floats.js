@@ -127,4 +127,16 @@ module.exports = fp(async function (fastify, opts)
           return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
         }
       })
+
+    fastify.decorate("GetLatestActiveFloat", async function(request) 
+    {
+      try 
+      {
+        let latestActiveFloat = await prisma.floats.findMany({take :1, where : { status : "Active"}, orderBy:{ id: 'desc'}})
+        return latestActiveFloat[0]
+      } catch (err) 
+      {
+        return err
+      }
+    })
 })

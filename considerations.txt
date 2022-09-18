@@ -9,3 +9,27 @@ To Consider :
 
 
 adding services and service providers
+
+
+
+TO DO TOMORROW :
+- LIMIT & FLOAT CONTROL middleware(TRANSACTION MIDDLEWARE)
+- TRANSACTIONS(ALL->AC/TRANSFER/PAYMENTS ETC) MANAGEMENT//
+
+Transaction Checks ;-
+- Is Service Active and limit obeyed for particular customer class ?
+- Is Float enough
+
+- FINALIZING ATTACHMENTS UPLOADING IN SUBSCRIPTIONS
+
+ATTACHMENTS
+subscriber_id, attachment_type, size, path, created_by, authorized_by, created_at, authorized_at, status
+
+
+Logs
+Keeping logging history
+
+
+
+
+warn(prisma-client) There are already 10 instances of Prisma Client actively running.

@@ -62,13 +62,15 @@ module.exports = fp(async function (fastify, opts)
             //GET TOKEN DETAILS
             const token = request.headers.authorization.replace('Bearer ', '')
             const user = fastify.jwt.decode(token)
+
+            //reply.send(user)
   
             //VALIDATE USER IF NECESSARY
-            if(!user.id && !user.cif && !user.phone_number)
+            if(!user.id || !user.cif || !user.phone_number || !user.class_id || !user.first_name || !user.last_name || !user.status || !user.preferred_language)
             {
-              reply.code(401).send({responseCode:401, error : "Unauthorized", message : "Invalid User Provided"})
+              reply.code(401).send({responseCode:401, error : "Unauthorized", message : "Invalid Subscriber Authentication Details"})
             }
-            
+          
             //CHECK IF TOKEN IS EXPIRED
             if(Date.now() >= user.exp * 1000)
             {

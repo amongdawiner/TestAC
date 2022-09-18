@@ -16,7 +16,7 @@ model accounts {
   created_by                          Int
   authorized_at                       DateTime?           @db.Timestamp(0)
   authorized_by                       Int
-  status                              String?             @default("Pending") @db.VarChar(255)
+  status                              accounts_status?    @default(Pending)
   acccount_number                     String              @unique(map: "acccount_number_UNIQUE") @db.VarChar(255)
   users_accounts_created_byTousers    users               @relation("accounts_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "accounts_ibfk_1")
   users_accounts_authorized_byTousers users               @relation("accounts_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "accounts_ibfk_2")
@@ -46,37 +46,37 @@ model audit_logs {
 }
 
 model devices {
-  id              Int          @id @default(autoincrement())
-  udid            String       @db.VarChar(255)
+  id              Int             @id @default(autoincrement())
+  udid            String          @db.VarChar(255)
   subscriber_id   Int?
-  model           String?      @db.VarChar(255)
-  name            String?      @db.VarChar(255)
-  created_at      DateTime     @default(now()) @db.Timestamp(0)
-  created_by      Int          @db.UnsignedInt
-  authorized_at   DateTime?    @default(now()) @db.Timestamp(0)
-  authorized_by   Int?         @db.UnsignedInt
-  status          String?      @default("Active") @db.VarChar(255)
-  otp             String?      @db.VarChar(255)
-  is_otp_verified Int?         @default(0) @db.TinyInt
-  subscribers     subscribers? @relation(fields: [subscriber_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "devices_ibfk_1")
+  model           String?         @db.VarChar(255)
+  name            String?         @db.VarChar(255)
+  created_at      DateTime        @default(now()) @db.Timestamp(0)
+  created_by      Int             @db.UnsignedInt
+  authorized_at   DateTime?       @default(now()) @db.Timestamp(0)
+  authorized_by   Int?            @db.UnsignedInt
+  status          devices_status? @default(Active)
+  otp             String?         @db.VarChar(255)
+  is_otp_verified Int?            @default(0) @db.TinyInt
+  subscribers     subscribers?    @relation(fields: [subscriber_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "devices_ibfk_1")
 
   @@index([created_by], map: "createdby")
   @@index([subscriber_id], map: "subscriber_id")
 }
 
 model floats {
-  id                                Int       @id @default(autoincrement())
+  id                                Int            @id @default(autoincrement())
   previous_amount                   Float
   current_amount                    Float
   previous_balance                  Float
   current_balance                   Float
-  created_at                        DateTime  @default(now()) @db.Timestamp(0)
+  created_at                        DateTime       @default(now()) @db.Timestamp(0)
   created_by                        Int
-  authorized_at                     DateTime? @db.Timestamp(0)
+  authorized_at                     DateTime?      @db.Timestamp(0)
   authorized_by                     Int?
-  status                            String?   @default("Pending") @db.VarChar(255)
-  users_floats_authorized_byTousers users?    @relation("floats_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Cascade, map: "authorized_by")
-  users_floats_created_byTousers    users     @relation("floats_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "floats_ibfk_1")
+  status                            floats_status? @default(Pending)
+  users_floats_authorized_byTousers users?         @relation("floats_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Cascade, map: "authorized_by")
+  users_floats_created_byTousers    users          @relation("floats_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "floats_ibfk_1")
 
   @@index([authorized_by], map: "authorized_by")
   @@index([created_by], map: "createdby")
@@ -109,7 +109,7 @@ model limits {
   created_by                        Int
   authorized_at                     DateTime?          @db.Timestamp(0)
   authorized_by                     Int?
-  status                            String?            @default("Pending") @db.VarChar(255)
+  status                            limits_status?     @default(Pending)
   services                          services?          @relation(fields: [service_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "limits_ibfk_1")
   subscriber_classes                subscriber_classes @relation(fields: [subscriber_class_id], references: [id], onUpdate: Restrict, map: "limits_ibfk_2")
   users_limits_created_byTousers    users              @relation("limits_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "limits_ibfk_3")
@@ -154,7 +154,7 @@ model service_providers {
   name                                         String                     @db.VarChar(255)
   common_name                                  String?                    @db.VarChar(255)
   logo                                         String                     @db.VarChar(255)
-  status                                       String                     @default("Pending") @db.VarChar(255)
+  status                                       service_providers_status   @default(Pending)
   created_by                                   Int
   created_at                                   DateTime                   @default(now()) @db.DateTime(0)
   authorized_by                                Int
@@ -179,7 +179,7 @@ model services {
   created_by                          Int
   authorized_at                       DateTime?           @db.Timestamp(0)
   authorized_by                       Int?
-  status                              String?             @db.VarChar(255)
+  status                              services_status?
   users_services_authorized_byTousers users?              @relation("services_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "services_ibfk_1")
   users_services_created_byTousers    users               @relation("services_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "services_ibfk_2")
   limits                              limits[]
@@ -191,15 +191,15 @@ model services {
 }
 
 model subscriber_classes {
-  id                                            Int           @id @default(autoincrement())
-  name                                          String?       @db.VarChar(255)
-  created_at                                    DateTime      @default(now()) @db.Timestamp(0)
+  id                                            Int                        @id @default(autoincrement())
+  name                                          String?                    @db.VarChar(255)
+  created_at                                    DateTime                   @default(now()) @db.Timestamp(0)
   created_by                                    Int
-  authorized_at                                 DateTime?     @db.Timestamp(0)
+  authorized_at                                 DateTime?                  @db.Timestamp(0)
   authorized_by                                 Int?
-  status                                        String?       @default("Pending") @db.VarChar(255)
-  users_subscriber_classes_created_byTousers    users         @relation("subscriber_classes_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "subscriber_classes_ibfk_1")
-  users_subscriber_classes_authorized_byTousers users?        @relation("subscriber_classes_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "subscriber_classes_ibfk_2")
+  status                                        subscriber_classes_status? @default(Pending)
+  users_subscriber_classes_created_byTousers    users                      @relation("subscriber_classes_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "subscriber_classes_ibfk_1")
+  users_subscriber_classes_authorized_byTousers users?                     @relation("subscriber_classes_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "subscriber_classes_ibfk_2")
   limits                                        limits[]
   subscribers                                   subscribers[]
 
@@ -208,25 +208,25 @@ model subscriber_classes {
 }
 
 model subscribers {
-  id                 Int                @id @default(autoincrement())
+  id                 Int                 @id @default(autoincrement())
   class_id           Int
-  cif                String             @unique(map: "cif") @db.VarChar(255)
-  branch_code        String?            @db.VarChar(255)
-  preferred_language String?            @default("EN") @db.VarChar(255)
-  first_name         String             @db.VarChar(255)
-  phone_number       String             @unique(map: "phone_number") @db.VarChar(255)
-  imsi               String?            @db.VarChar(255)
-  email              String?            @db.VarChar(255)
-  created_at         DateTime           @default(now()) @db.Timestamp(0)
-  created_by         Int                @db.UnsignedInt
-  authorized_at      DateTime?          @db.Timestamp(0)
-  authorized_by      Int?               @db.UnsignedInt
-  status             String?            @default("Pending") @db.VarChar(255)
-  middle_name        String?            @db.VarChar(255)
-  last_name          String             @db.VarChar(255)
-  password           String             @db.VarChar(255)
-  is_first_time_pin  Int                @default(1) @db.TinyInt
-  subscriber_classes subscriber_classes @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
+  cif                String              @unique(map: "cif") @db.VarChar(255)
+  branch_code        String?             @db.VarChar(255)
+  preferred_language String?             @default("EN") @db.VarChar(255)
+  first_name         String              @db.VarChar(255)
+  phone_number       String              @unique(map: "phone_number") @db.VarChar(255)
+  imsi               String?             @db.VarChar(255)
+  email              String?             @db.VarChar(255)
+  created_at         DateTime            @default(now()) @db.Timestamp(0)
+  created_by         Int                 @db.UnsignedInt
+  authorized_at      DateTime?           @db.Timestamp(0)
+  authorized_by      Int?                @db.UnsignedInt
+  status             subscribers_status? @default(Pending)
+  middle_name        String?             @db.VarChar(255)
+  last_name          String              @db.VarChar(255)
+  password           String              @db.VarChar(255)
+  is_first_time_pin  Int                 @default(1) @db.TinyInt
+  subscriber_classes subscriber_classes  @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
   accounts           accounts[]
   devices            devices[]
 
@@ -244,23 +244,25 @@ model sys_logs_history {
 }
 
 model transactions {
-  id                         Int       @id @default(autoincrement())
-  service_id                 Int?
-  account_id                 Int?
-  request_number             String    @unique(map: "request_number") @db.VarChar(255)
-  retrieval_reference_number String?   @unique(map: "retrieval_reference_number") @db.VarChar(255)
-  amount                     Float
-  destination                String?   @db.VarChar(255)
-  nature_of_transaction      String    @db.VarChar(255)
-  transaction_date           DateTime? @db.Date
-  narration                  String?   @db.VarChar(255)
-  created_at                 DateTime  @default(now()) @db.Timestamp(0)
-  created_by                 String?   @db.VarChar(255)
-  authorized_at              DateTime? @db.Timestamp(0)
-  authorized_by              String?   @db.VarChar(255)
-  status                     Int?
-  services                   services? @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_1")
-  accounts                   accounts? @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_2")
+  id                          Int                  @id @default(autoincrement())
+  service_id                  Int?
+  account_id                  Int?
+  request_number              String               @unique(map: "request_number") @db.VarChar(255)
+  retrieval_reference_number  String?              @unique(map: "retrieval_reference_number") @db.VarChar(255)
+  thirdparty_reference_number String?              @db.VarChar(255)
+  misclaneous_data            String?              @db.Text
+  amount                      Float
+  destination                 String?              @db.VarChar(255)
+  nature_of_transaction       String               @db.VarChar(255)
+  transaction_date            DateTime?            @db.Date
+  narration                   String?              @db.VarChar(255)
+  created_at                  DateTime             @default(now()) @db.Timestamp(0)
+  created_by                  String?              @db.VarChar(255)
+  authorized_at               DateTime?            @db.Timestamp(0)
+  authorized_by               String?              @db.VarChar(255)
+  status                      transactions_status?
+  services                    services?            @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_1")
+  accounts                    accounts?            @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_2")
 
   @@index([account_id], map: "account_id")
   @@index([service_id], map: "service_id")
@@ -275,7 +277,7 @@ model users {
   dob                                                        DateTime?            @db.Date
   password                                                   String?              @db.VarChar(255)
   role                                                       Int                  @default(1)
-  status                                                     String?              @default("Active") @db.VarChar(255)
+  status                                                     users_status?        @default(Active)
   created_at                                                 DateTime?            @default(now()) @db.DateTime(0)
   accounts_accounts_created_byTousers                        accounts[]           @relation("accounts_created_byTousers")
   accounts_accounts_authorized_byTousers                     accounts[]           @relation("accounts_authorized_byTousers")
@@ -306,4 +308,74 @@ enum service_providers_category {
   TRAVEL
   ELECTRICITY
   OTHERS
+}
+
+enum subscriber_classes_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum accounts_status {
+  Pending
+  Active
+  Rejected
+  Inactive
+}
+
+enum service_providers_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum users_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum devices_status {
+  Pending
+  Active
+  Rejected
+  Inactive
+}
+
+enum floats_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum services_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum limits_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum subscribers_status {
+  Pending
+  Active
+  Inactive
+  Rejected
+}
+
+enum transactions_status {
+  Pending
+  Completed
+  Failed
+  Reversed
 }

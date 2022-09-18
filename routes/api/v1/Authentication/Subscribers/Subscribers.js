@@ -28,11 +28,14 @@ module.exports = async function (fastify, opts)
       })
 
       const signInOptions = {
-        schema: {
-          body: {
+        schema: 
+        {
+          body: 
+          {
             type: 'object',
             required: ['mobile','password','udid', 'device_name','device_model'],
-            properties: {
+            properties: 
+            {
               mobile : { type: 'integer', minimum:9 },
               password : { type: 'string' },
               udid : { type: 'string' },
