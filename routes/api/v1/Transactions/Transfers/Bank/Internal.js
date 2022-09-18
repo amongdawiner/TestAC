@@ -4,23 +4,24 @@ module.exports = async function (fastify, opts)
 {        
       const transactionOption = 
       {
-        schema: {
+        schema: 
+        {
           body: 
           {
             type: 'object',
-            required: ['amount'],
+            required: ['payload'],
             properties: 
             {
-              amount : { type: 'number' },
+              payload : { type: 'string' },
             },
           },
         },
         onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
-        preValidation: [fastify.CheckAllTransactingEligibility]
+        preValidation: [fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
       }
       fastify.post('/Internal', transactionOption,  async function (request) 
       {  
-        return {responseCode:"Fine"}
+        return {message:"Ready for Particular Transaction ...", transaction : JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))}
         //return  fastify.RegisterSubscriber({body : request.body, user: request.user})
       })
 

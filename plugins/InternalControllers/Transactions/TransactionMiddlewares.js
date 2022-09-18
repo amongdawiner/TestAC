@@ -4,15 +4,14 @@ const fp = require('fastify-plugin')
 
 module.exports = fp(async function (fastify, opts) 
 {
-    const { PrismaClient } = require('@prisma/client')
-    const prisma = new PrismaClient()
+    //const prisma  = await fastify.prisma()
 
     fastify.decorate("StoreTransactionLog", async function(request, reply)
     { 
         try 
         {
           //Save Transaction Log ...
-          fastify.log.fatal("Recording Transaction")
+          fastify.log.info("Recording Transaction")
         } catch (err) {
           return err
         }
@@ -23,7 +22,7 @@ module.exports = fp(async function (fastify, opts)
         try 
         {
           //Preventing re-submission of the same transaction after certain duration ...
-          fastify.log.fatal("Preventing Resubmission of the Transaction")
+          fastify.log.info("Preventing Resubmission of the Transaction")
           return null
         } catch (err) {
           return err
@@ -33,14 +32,13 @@ module.exports = fp(async function (fastify, opts)
     fastify.decorate("CheckFloat", async function(request, reply)
     { 
         try 
-        {
-          fastify.log.fatal("Checking Float ...")
-          let transactionRequest = request.body
-          await fastify.log.fatal(transactionRequest)
-          //return reply.code(401).send(transactionRequest)
+        { 
+          let transactionPayload = JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))
           let latestFloatDetails = await fastify.GetLatestActiveFloat()
-          let amount = request.body.amount
-          fastify.log.fatal((latestFloatDetails.current_balance > 111000) ? "Greater" : "Small")
+          if(latestFloatDetails.current_balance < transactionPayload.amount)
+          {
+            reply.send({responseCode : "INSUFFICIENT_FLOAT", error: "Insufficient Working Fund", message:"Float Balance is Insufficient for Transacting : "+transactionPayload.amount});
+          }
         } catch (err) {
           return err
         }
@@ -50,7 +48,12 @@ module.exports = fp(async function (fastify, opts)
     { 
         try 
         {
-          fastify.log.fatal("Check Service Availability And Limit ...")
+          let transactionPayload = JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))
+          let service_limits = await fastify.GetLimits({body:{subscriber_class_id:request.user.class_id, service_id:transactionPayload.service_id.service_id, status:"Active"}})
+          if(service_limits[0].daily_limit < transactionPayload.amount)
+          {
+            reply.send({responseCode : "EXCEEDED_DAILY_LIMIT", error: "Exceeded Daily Transaction Amount", message:"The requested "+transactionPayload.amount+" has exceeded the daily limit of "+service_limits[0].daily_limit});
+          }
         } catch (err) {
           return err
         }

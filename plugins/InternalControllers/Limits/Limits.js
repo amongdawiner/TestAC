@@ -4,8 +4,7 @@ const fp = require('fastify-plugin')
 
 module.exports = fp(async function (fastify, opts) 
 {
-    const { PrismaClient } = require('@prisma/client')
-    const prisma = new PrismaClient()
+    const prisma  = await fastify.prisma()
 
     fastify.decorate("AddLimit", async function(request) 
     {
@@ -65,7 +64,6 @@ module.exports = fp(async function (fastify, opts)
           return err
         }
       })
-  
 
     fastify.decorate("AuthorizeLimit", async function(request) {
       try 

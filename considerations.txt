@@ -32,4 +32,19 @@ Keeping logging history
 
 
 
-warn(prisma-client) There are already 10 instances of Prisma Client actively running.
+super json
+services : 
+[
+    {
+        id:1,
+        name:"XXXXXX",
+        category:"Fund Transfer",
+        service_providers:[
+            {
+                id:1,
+                name:"Vodacom Mpesa"
+                category:"MNO"
+            }
+        ]
+    }
+]
