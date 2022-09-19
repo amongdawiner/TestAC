@@ -17,7 +17,7 @@ module.exports = async function (fastify, opts)
           },
         },
         onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
-        preValidation: [fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
+        preValidation: [fastify.CheckATransactingAccount, fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
       }
       fastify.post('/Internal', transactionOption,  async function (request) 
       {  

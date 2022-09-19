@@ -53,3 +53,14 @@ services :
 - 
 - Transaction Middleware (Float Check, Limit Check, Service Availability Check, )
 - Transaction (Actual)
+
+
+** Validate if null in Transaction payload
+
+
+reconciliation
+
+
+manage card services 
+
+staff to login with ldap

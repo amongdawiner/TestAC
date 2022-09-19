@@ -6,17 +6,6 @@ module.exports = fp(async function (fastify, opts)
 {
     //const prisma  = await fastify.prisma()
 
-    fastify.decorate("StoreTransactionLog", async function(request, reply)
-    { 
-        try 
-        {
-          //Save Transaction Log ...
-          fastify.log.info("Recording Transaction")
-        } catch (err) {
-          return err
-        }
-    })
-
     fastify.decorate("PreventResubmission", async function(request, reply)
     { 
         try 
@@ -28,6 +17,32 @@ module.exports = fp(async function (fastify, opts)
           return err
         }
       })
+
+      fastify.decorate("StoreTransactionLog", async function(request, reply)
+      { 
+          try 
+          {
+            //Save Transaction Log ...
+            fastify.log.info("Recording Transaction")
+          } catch (err) {
+            return err
+          }
+      })
+
+      fastify.decorate("CheckATransactingAccount", async function(request, reply)
+      { 
+          try 
+          { 
+            let transactionPayload = JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))
+            let accountDetails = await fastify.GetSubscriberAccounts({body:{subscriber_id:request.user.id, id:transactionPayload.source_account_id, status:"Active"}, user:request.user})
+            if(accountDetails[0] == null)
+            {
+              reply.send({responseCode : "INVALID_ACCOUNT", error: "Invalid Source Account", message:"Source Account is invalid or may be inactive or belongs to other customer "});
+            }
+          } catch (err) {
+            return err
+          }
+        })
 
     fastify.decorate("CheckFloat", async function(request, reply)
     { 

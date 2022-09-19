@@ -26,7 +26,7 @@ module.exports = async function (fastify, opts)
 
       fastify.post('/GetAccounts', { onRequest: [fastify.Authenticate] },  async function (request) 
       {  
-        return  fastify.GetSubscriberAccounts()
+        return  fastify.GetSubscriberAccounts({body:request.body, user:request.user})
       })
 
       const toggleSubscriberAccountsOptions =

@@ -35,8 +35,45 @@ module.exports = fp(async function (fastify, opts)
     })
 
     fastify.decorate("GetSubscriberAccounts", async function(request) {
-      try {
-          return prisma.accounts.findMany()
+      try 
+      {
+          return prisma.accounts.findMany(
+          { 
+            take: request.body.take != null ? request.body.take : undefined,
+            skip : request.body.skip != null ? request.body.skip : undefined,
+            cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
+            where : 
+            {
+            AND :
+            [
+            { 
+              id : request.body.id != null ? request.body.id : undefined,
+              subscriber_id : request.body.subscriber_id != null ? request.body.subscriber_id : undefined,
+              acccount_number : request.body.acccount_number != null ? request.body.acccount_number : undefined,
+              class : request.body.class != null ? request.body.class : undefined,
+              status : request.body.status != null ? request.body.status : undefined,
+              created_at : 
+              {
+                gte : request.body.start_date != null ? new Date(request.body.start_date) : undefined,
+                lte : request.body.end_date != null ? new Date(request.body.end_date) : undefined,
+              }
+            }
+            ]
+            },
+            select :
+            {
+              subscriber_id:true,
+              acccount_number: true,
+              main : true,
+              class : true,
+              status : true,
+              id : true
+            },
+          orderBy: 
+           {
+            id: 'desc',
+           }
+          })
       } catch (err) {
         return err
       }
