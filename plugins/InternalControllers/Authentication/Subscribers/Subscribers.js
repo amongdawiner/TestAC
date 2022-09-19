@@ -60,10 +60,43 @@ module.exports = fp(async function (fastify, opts)
               {
                 //check if device exist
                 let device = await prisma.devices.findFirst({where: {subscriber_id: subscriber.id, udid:request.udid, status:"Active"}})
+
+                //Get linked Accounts
+                let accounts = await prisma.accounts.findMany({where: {subscriber_id: subscriber.id}, select : {id:true, main:true, acccount_number:true, class:true, status:true}})
+
+                //Get Active services
+                let services = await prisma.services.findMany(
+                  {
+                    where: {status: "Active"}, 
+                    select : 
+                    {
+                      id:true,
+                      code:true,
+                      category:true,
+                      name:true, 
+                      common_name:true,
+                      description:true,
+                      service_providers:
+                      {
+                        where:{status:"Active"},
+                        select:
+                        {
+                          id:true,
+                          code:true,
+                          swift_code:true,
+                          category:true,
+                          name:true,
+                          common_name:true,
+                          logo:true
+                        }
+                      }
+                    },
+                  })
+
                 if(device && device.is_otp_verified)
                 {
                   //Successfully Authenticated, Pre-Data shall be fetched here ...
-                  return {responseCode: "SUCCESS", message:"Successfully Authenticated", is_first_time_pin:false, is_device_otp_verified:true, device : {name : device.name, model : device.model, udid : device.udid}, token : fastify.jwt.sign(subscriber), services : {}, service_providers :{}}
+                  return {responseCode: "SUCCESS", message:"Successfully Authenticated",is_first_time_pin:false, is_device_otp_verified:true, accounts:accounts, device : {name : device.name, model : device.model, udid : device.udid},  services : services, token : fastify.jwt.sign(subscriber)}
                 }
                 else if(device && !device.is_otp_verified)
                 {

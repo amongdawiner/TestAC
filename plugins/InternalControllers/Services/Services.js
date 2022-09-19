@@ -6,47 +6,48 @@ module.exports = fp(async function (fastify, opts)
 {
     const prisma  = await fastify.prisma()
 
-    fastify.decorate("AddLimit", async function(request) 
+    fastify.decorate("AddService", async function(request) 
     {
       try 
       {
-        let existingCount = await prisma.limits.count({where: {status: 'Pending', service_id:request.body.service_id, subscriber_class_id: request.body.subscriber_class_id}})
+        let existingCount = await prisma.services.count({where: {OR : [{code:request.body.code}, {name:request.body.name}, {common_name: request.body.common_name}]}})
         if(existingCount==0)
         {
-            let newLimit = 
+            let newService = 
             {
-                subscriber_class_id : request.body.subscriber_class_id,
-                service_id    : request.body.service_id,
-                daily_limit   : request.body.daily_limit,
-                weekly_limit  : request.body.weekly_limit != null ? request.body.weekly_limit :  request.body.daily_limit*7,
-                monthly_limit : request.body.monthly_limit != null ? request.body.monthly_limit :  request.body.daily_limit*30,
-                yearly_limit  : request.body.yearly_limit != null ? request.body.yearly_limit :  request.body.daily_limit*365,
+                code : request.body.code,
+                name    : request.body.name,
+                common_name   : request.body.common_name != null ? request.body.common_name :  request.body.name,
+                category  : await prisma.services_category.CASH_WITHDRAW,
+                description  : request.body.description,
                 created_by    : request.user.id,
             }
-            let limit = await prisma.limits.create({data:newLimit })
-            return {responseCode: "SUCCESS", message : "New Limit Added Successfully", limit : limit}
+            let service = await prisma.services.create({data:newService })
+            return {responseCode: "SUCCESS", message : "New Service Added Successfully", service : service}
           }
           else
           {
-              return{responseCode : "UNATTENDED_PENDING", error: "There is a Pending Limit", message:"Kindly request Authorizer to Authorize or Reject Latest Limit Request"};
+              return{responseCode : "DUPLICATE", error: "Service Exists Already", message:request.body.name+" Already Exists !"};
           }
       } catch (err) {
         return err
       }
     })
 
-    fastify.decorate("GetLimits", async function(request) {
+    fastify.decorate("GetServices", async function(request) {
         try 
         {
-          return prisma.limits.findMany(
+          return prisma.services.findMany(
             { 
               take: request.body.take != null ? request.body.take : undefined,
               skip : request.body.skip != null ? request.body.skip : undefined,
               cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
               where : 
               { 
-                subscriber_class_id : request.body.subscriber_class_id != null ? request.body.subscriber_class_id : undefined,
-                service_id : request.body.service_id != null ? request.body.service_id : undefined,
+                name : request.body.name != null ? request.body.name : undefined,
+                common_name : request.body.common_name != null ? request.body.common_name : undefined,
+                category : request.body.category != null ? request.body.category : undefined,
+                code : request.body.code != null ? request.body.code : undefined,
                 status : request.body.status != null ? request.body.status : undefined,
                 created_at : 
                 {
@@ -65,22 +66,22 @@ module.exports = fp(async function (fastify, opts)
         }
       })
 
-    fastify.decorate("AuthorizeLimit", async function(request) {
+    fastify.decorate("AuthorizeService", async function(request) {
       try 
       {
 
-        let thisRecord = await prisma.limits.findFirst({where: {status: 'Pending', id:request.body.limit_id,}})
+        let thisRecord = await prisma.services.findFirst({where: {status: 'Pending', id:request.body.service_id,}})
 
         if(thisRecord == null)
         {
-             return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.limit_id, rowsAffected : 0}
+             return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.service_id, rowsAffected : 0}
         }
 
-        let update = await prisma.limits.update(
+        let update = await prisma.services.update(
         {
               where:
               {
-                id: request.body.limit_id,
+                id: request.body.service_id,
               },
               data: 
               {
@@ -89,27 +90,27 @@ module.exports = fp(async function (fastify, opts)
                 authorized_by : request.user.id
               },
         })
-        return {responseCode: "SUCCESS", message: "Successfully Authorized", limit : update}
+        return {responseCode: "SUCCESS", message: "Successfully Authorized", service : update}
       } catch (err) {
         return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
       }
     })
 
-    fastify.decorate("RejectLimit", async function(request) {
+    fastify.decorate("RejectService", async function(request) {
         try 
         {
-          let thisRecord = await prisma.limits.findFirst({where: {status: 'Pending', id:request.body.limit_id,}})
+          let thisRecord = await prisma.services.findFirst({where: {status: 'Pending', id:request.body.Service_id,}})
   
           if(thisRecord == null)
           {
-               return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.limit_id, rowsAffected : 0}
+               return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.service_id, rowsAffected : 0}
           }
   
-          let update = await prisma.limits.update(
+          let update = await prisma.services.update(
           {
                 where:
                 {
-                  id: request.body.limit_id,
+                  id: request.body.service_id,
                 },
                 data: 
                 {
@@ -118,7 +119,7 @@ module.exports = fp(async function (fastify, opts)
                   authorized_by : request.user.id
                 },
           })
-          return {responseCode: "SUCCESS", message: "Successfully Rejected", limit : update}
+          return {responseCode: "SUCCESS", message: "Successfully Rejected", service : update}
         } catch (err) {
           return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
         }

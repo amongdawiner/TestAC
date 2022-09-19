@@ -29,7 +29,8 @@ subscriber_id, attachment_type, size, path, created_by, authorized_by, created_a
 Logs
 Keeping logging history
 
-
+*** 
+check account status before Transaction
 
 
 super json
@@ -48,3 +49,7 @@ services :
         ]
     }
 ]
+
+- 
+- Transaction Middleware (Float Check, Limit Check, Service Availability Check, )
+- Transaction (Actual)

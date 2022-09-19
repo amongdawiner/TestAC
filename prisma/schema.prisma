@@ -15,11 +15,11 @@ model accounts {
   created_at                          DateTime            @default(now()) @db.Timestamp(0)
   created_by                          Int
   authorized_at                       DateTime?           @db.Timestamp(0)
-  authorized_by                       Int
+  authorized_by                       Int?
   status                              accounts_status?    @default(Pending)
   acccount_number                     String              @unique(map: "acccount_number_UNIQUE") @db.VarChar(255)
   users_accounts_created_byTousers    users               @relation("accounts_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "accounts_ibfk_1")
-  users_accounts_authorized_byTousers users               @relation("accounts_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "accounts_ibfk_2")
+  users_accounts_authorized_byTousers users?              @relation("accounts_authorized_byTousers", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "accounts_ibfk_2")
   subscribers                         subscribers?        @relation(fields: [subscriber_id], references: [id], onDelete: Cascade, map: "subscriber_id")
   loan_applications                   loan_applications[]
   transactions                        transactions[]

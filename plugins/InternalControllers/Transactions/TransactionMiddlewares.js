@@ -48,6 +48,22 @@ module.exports = fp(async function (fastify, opts)
     { 
         try 
         {
+          //sum up daily transactions
+          let transactionPayload = JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))
+          let service_limits = await fastify.GetLimits({body:{subscriber_class_id:request.user.class_id, service_id:transactionPayload.service_id.service_id, status:"Active"}})
+          if(service_limits[0].daily_limit < transactionPayload.amount)
+          {
+            reply.send({responseCode : "EXCEEDED_DAILY_LIMIT", error: "Exceeded Daily Transaction Amount", message:"The requested "+transactionPayload.amount+" has exceeded the daily limit of "+service_limits[0].daily_limit});
+          }
+        } catch (err) {
+          return err
+        }
+    })
+
+    fastify.decorate("CheckTransactingAccountStatus", async function(request, reply)
+    { 
+        try 
+        {
           let transactionPayload = JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))
           let service_limits = await fastify.GetLimits({body:{subscriber_class_id:request.user.class_id, service_id:transactionPayload.service_id.service_id, status:"Active"}})
           if(service_limits[0].daily_limit < transactionPayload.amount)
