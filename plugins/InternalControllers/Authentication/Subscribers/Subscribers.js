@@ -67,7 +67,7 @@ module.exports = fp(async function (fastify, opts)
                 //Get Active services
                 let services = await prisma.services.findMany(
                   {
-                    where: {status: "Active"}, 
+                    where : {},
                     select : 
                     {
                       id:true,
@@ -76,6 +76,7 @@ module.exports = fp(async function (fastify, opts)
                       name:true, 
                       common_name:true,
                       description:true,
+                      status:true,
                       service_providers:
                       {
                         where:{status:"Active"},
