@@ -62,7 +62,7 @@ module.exports = fp(async function (fastify, opts)
                 let device = await prisma.devices.findFirst({where: {subscriber_id: subscriber.id, udid:request.udid, status:"Active"}})
 
                 //Get linked Accounts
-                let accounts = await prisma.accounts.findMany({where: {subscriber_id: subscriber.id}, select : {id:true, main:true, acccount_number:true, class:true, status:true}})
+                let accounts = await prisma.accounts.findMany({where: {subscriber_id: subscriber.id}, select : {id:true, main:true, acccount_number:true, class:true, status:true, currency:true}})
 
                 //Get Active services
                 let services = await prisma.services.findMany(

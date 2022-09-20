@@ -12,6 +12,7 @@ model accounts {
   subscriber_id                       Int?
   main                                Int?                @default(0)
   class                               String?             @db.VarChar(255)
+  currency                            accounts_currency
   created_at                          DateTime            @default(now()) @db.Timestamp(0)
   created_by                          Int
   authorized_at                       DateTime?           @db.Timestamp(0)
@@ -254,6 +255,7 @@ model transactions {
   amount                      Float
   destination                 String?              @db.VarChar(255)
   nature_of_transaction       String               @db.VarChar(255)
+  channel                     transactions_channel
   transaction_date            DateTime?            @db.Date
   narration                   String?              @db.VarChar(255)
   created_at                  DateTime             @default(now()) @db.Timestamp(0)
@@ -299,6 +301,7 @@ enum services_category {
   MNO_FUND_TRANSFER  @map("MNO FUND TRANSFER")
   PAYMENTS
   OTHERS
+  AIRTIME
 }
 
 enum service_providers_category {
@@ -310,18 +313,18 @@ enum service_providers_category {
   OTHERS
 }
 
+enum accounts_currency {
+  TZS
+  USD
+  KES
+  UGX
+}
+
 enum subscriber_classes_status {
   Pending
   Active
   Inactive
   Rejected
-}
-
-enum accounts_status {
-  Pending
-  Active
-  Rejected
-  Inactive
 }
 
 enum service_providers_status {
@@ -336,6 +339,13 @@ enum users_status {
   Active
   Inactive
   Rejected
+}
+
+enum accounts_status {
+  Pending
+  Active
+  Rejected
+  Inactive
 }
 
 enum devices_status {
@@ -359,6 +369,13 @@ enum services_status {
   Rejected
 }
 
+enum transactions_channel {
+  APPS
+  USSD
+  IB
+  AGENT
+}
+
 enum limits_status {
   Pending
   Active
@@ -378,4 +395,5 @@ enum transactions_status {
   Completed
   Failed
   Reversed
+  Pending_Reversal @map("Pending Reversal")
 }

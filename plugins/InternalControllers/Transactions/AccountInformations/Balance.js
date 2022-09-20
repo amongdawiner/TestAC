@@ -12,23 +12,26 @@ module.exports = fp(async function (fastify, opts)
       try 
       {
         //send balance enquiry request to ESB / BEM / CBS
-        let account_id = request.body.account_id
 
-        await delay(30000)
+        let account = await fastify.GetSubscriberAccounts({body:{id:request.body.account_id, subscriber_id:request.user.id}})
 
-        let response = 
+        if(account[0])
         {
-            responseCode : "SUCCESS", message : "Balance Enquired Successfully",
-            account : 
+            account = account[0]
+            let response = 
             {
-                acccount_number:account_id,
-                name : "ULRIK PETER",
-                currency : "TZS"
-            },
-            available_balance : 120000.00,
-            actual_balance : 11000.00
+                responseCode : "SUCCESS", message : "Balance Enquired Successfully",
+                account : 
+                {
+                    acccount_number : account.acccount_number,
+                    currency : account.currency
+                },
+                available_balance : (Math.random()*32340000/2).toFixed(2),
+                actual_balance : (Math.random()*32340000/2).toFixed(2)
+            }
+            return response
         }
-        return response
+        return {responseCode : "INVALID_ACCOUNT", message : "No Account Found with ID : "+request.body.account_id}
       } catch (err) 
       {
         return err

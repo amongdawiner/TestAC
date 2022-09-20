@@ -64,6 +64,7 @@ module.exports = fp(async function (fastify, opts)
             {
               subscriber_id:true,
               acccount_number: true,
+              currency:true,
               main : true,
               class : true,
               status : true,

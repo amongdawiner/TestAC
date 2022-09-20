@@ -17,11 +17,10 @@ module.exports = async function (fastify, opts)
           },
         },
         onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
-        preValidation: [fastify.CheckATransactingAccount, fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
       }
-      fastify.post('/BalanceEnquiry', transactionOption,  async function (request) 
+      fastify.post('/MiniStatementEnquiry', transactionOption,  async function (request) 
       {  
-        return await fastify.BalanceEnquiry({body:request.body, user:request.user})
+        return await fastify.MiniStatementEnquiry({body:request.body, user:request.user})
       })
 
 }
