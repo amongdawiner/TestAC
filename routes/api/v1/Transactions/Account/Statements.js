@@ -12,7 +12,7 @@ module.exports = async function (fastify, opts)
             required: ['account_id'],
             properties: 
             {
-              payload : { type: 'string' },
+              account_id : { type: 'string' },
             },
           },
         },
@@ -21,6 +21,31 @@ module.exports = async function (fastify, opts)
       fastify.post('/MiniStatementEnquiry', transactionOption,  async function (request) 
       {  
         return await fastify.MiniStatementEnquiry({body:request.body, user:request.user})
+      })
+
+
+      const fullStatementOption = 
+      {
+        schema: 
+        {
+          body: 
+          {
+            type: 'object',
+            required: ['account_id', 'date_from', 'date_to'],
+            properties: 
+            {
+              account_id : { type: 'string' },
+              date_from  : { type : 'string'},
+              date_to    : { type : 'string'}
+            },
+          },
+        },
+        onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
+      }
+
+      fastify.post('/FullStatementEnquiry', fullStatementOption,  async function (request) 
+      {  
+        return await fastify.FullStatementEnquiry({body:request.body, user:request.user})
       })
 
 }

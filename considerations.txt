@@ -64,3 +64,5 @@ reconciliation
 manage card services 
 
 staff to login with ldap
+
+* adding logs for each Transaction even if it is Balance enquiry

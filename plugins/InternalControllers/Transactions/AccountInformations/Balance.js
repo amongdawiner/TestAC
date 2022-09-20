@@ -5,16 +5,13 @@ const { AsyncTask } = require('toad-scheduler')
 
 module.exports = fp(async function (fastify, opts) 
 {
-    const prisma  = await fastify.prisma()
-
     fastify.decorate("BalanceEnquiry", async function(request) 
     {
       try 
       {
         //send balance enquiry request to ESB / BEM / CBS
-
-        let account = await fastify.GetSubscriberAccounts({body:{id:request.body.account_id, subscriber_id:request.user.id}})
-
+        let account = await fastify.GetSubscriberAccounts({body:{id:parseInt(request.body.account_id), subscriber_id:request.user.id}})
+        
         if(account[0])
         {
             account = account[0]

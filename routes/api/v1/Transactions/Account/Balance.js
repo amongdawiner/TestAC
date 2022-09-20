@@ -2,7 +2,7 @@
 
 module.exports = async function (fastify, opts) 
 {        
-      const transactionOption = 
+      const balanceEnquiryOption = 
       {
         schema: 
         {
@@ -12,13 +12,14 @@ module.exports = async function (fastify, opts)
             required: ['account_id'],
             properties: 
             {
-              payload : { type: 'string' },
+              account_id : { type: 'string' },
             },
           },
         },
         onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
       }
-      fastify.post('/BalanceEnquiry', transactionOption,  async function (request) 
+
+      fastify.post('/BalanceEnquiry', balanceEnquiryOption,  async function (request) 
       {  
         return await fastify.BalanceEnquiry({body:request.body, user:request.user})
       })
