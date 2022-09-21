@@ -163,6 +163,7 @@ model service_providers {
   users_service_providers_authorized_byTousers users                      @relation("service_providers_authorized_byTousers", fields: [authorized_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_1")
   users_service_providers_created_byTousers    users                      @relation("service_providers_created_byTousers", fields: [created_by], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_2")
   services                                     services                   @relation(fields: [service_id], references: [id], onUpdate: Restrict, map: "service_providers_ibfk_3")
+  transactions                                 transactions[]
 
   @@index([authorized_by], map: "authorized_by")
   @@index([created_by], map: "created_by")
@@ -209,27 +210,29 @@ model subscriber_classes {
 }
 
 model subscribers {
-  id                 Int                 @id @default(autoincrement())
-  class_id           Int
-  cif                String              @unique(map: "cif") @db.VarChar(255)
-  branch_code        String?             @db.VarChar(255)
-  preferred_language String?             @default("EN") @db.VarChar(255)
-  first_name         String              @db.VarChar(255)
-  phone_number       String              @unique(map: "phone_number") @db.VarChar(255)
-  imsi               String?             @db.VarChar(255)
-  email              String?             @db.VarChar(255)
-  created_at         DateTime            @default(now()) @db.Timestamp(0)
-  created_by         Int                 @db.UnsignedInt
-  authorized_at      DateTime?           @db.Timestamp(0)
-  authorized_by      Int?                @db.UnsignedInt
-  status             subscribers_status? @default(Pending)
-  middle_name        String?             @db.VarChar(255)
-  last_name          String              @db.VarChar(255)
-  password           String              @db.VarChar(255)
-  is_first_time_pin  Int                 @default(1) @db.TinyInt
-  subscriber_classes subscriber_classes  @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
-  accounts           accounts[]
-  devices            devices[]
+  id                                                   Int                 @id @default(autoincrement())
+  class_id                                             Int
+  cif                                                  String              @unique(map: "cif") @db.VarChar(255)
+  branch_code                                          String?             @db.VarChar(255)
+  preferred_language                                   String?             @default("EN") @db.VarChar(255)
+  first_name                                           String              @db.VarChar(255)
+  phone_number                                         String              @unique(map: "phone_number") @db.VarChar(255)
+  imsi                                                 String?             @db.VarChar(255)
+  email                                                String?             @db.VarChar(255)
+  created_at                                           DateTime            @default(now()) @db.Timestamp(0)
+  created_by                                           Int                 @db.UnsignedInt
+  authorized_at                                        DateTime?           @db.Timestamp(0)
+  authorized_by                                        Int?                @db.UnsignedInt
+  status                                               subscribers_status? @default(Pending)
+  middle_name                                          String?             @db.VarChar(255)
+  last_name                                            String              @db.VarChar(255)
+  password                                             String              @db.VarChar(255)
+  is_first_time_pin                                    Int                 @default(1) @db.TinyInt
+  subscriber_classes                                   subscriber_classes  @relation(fields: [class_id], references: [id], onDelete: Cascade, map: "class_id")
+  accounts                                             accounts[]
+  devices                                              devices[]
+  transactions_subscribersTotransactions_created_by    transactions[]      @relation("subscribersTotransactions_created_by")
+  transactions_subscribersTotransactions_authorized_by transactions[]      @relation("subscribersTotransactions_authorized_by")
 
   @@index([class_id], map: "class_id")
 }
@@ -245,29 +248,36 @@ model sys_logs_history {
 }
 
 model transactions {
-  id                          Int                  @id @default(autoincrement())
-  service_id                  Int?
-  account_id                  Int?
-  request_number              String               @unique(map: "request_number") @db.VarChar(255)
-  retrieval_reference_number  String?              @unique(map: "retrieval_reference_number") @db.VarChar(255)
-  thirdparty_reference_number String?              @db.VarChar(255)
-  misclaneous_data            String?              @db.Text
-  amount                      Float
-  destination                 String?              @db.VarChar(255)
-  nature_of_transaction       String               @db.VarChar(255)
-  channel                     transactions_channel
-  transaction_date            DateTime?            @db.Date
-  narration                   String?              @db.VarChar(255)
-  created_at                  DateTime             @default(now()) @db.Timestamp(0)
-  created_by                  String?              @db.VarChar(255)
-  authorized_at               DateTime?            @db.Timestamp(0)
-  authorized_by               String?              @db.VarChar(255)
-  status                      transactions_status?
-  services                    services?            @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_1")
-  accounts                    accounts?            @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_2")
+  id                                                  Int                  @id @default(autoincrement())
+  service_id                                          Int?
+  service_provider_id                                 Int
+  account_id                                          Int?
+  request_number                                      String               @unique(map: "request_number") @db.VarChar(255)
+  retrieval_reference_number                          String?              @unique(map: "retrieval_reference_number") @db.VarChar(255)
+  thirdparty_reference_number                         String?              @db.VarChar(255)
+  misclaneous_data                                    String?              @db.Text
+  amount                                              Float
+  destination                                         String?              @db.VarChar(255)
+  nature_of_transaction                               String               @db.VarChar(255)
+  channel                                             transactions_channel
+  transaction_date                                    DateTime?            @db.Date
+  narration                                           String?              @db.VarChar(255)
+  created_at                                          DateTime             @default(now()) @db.Timestamp(0)
+  created_by                                          Int?
+  authorized_at                                       DateTime?            @db.Timestamp(0)
+  authorized_by                                       Int?
+  status                                              transactions_status?
+  services                                            services?            @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_1")
+  accounts                                            accounts?            @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "transactions_ibfk_2")
+  subscribers_subscribersTotransactions_created_by    subscribers?         @relation("subscribersTotransactions_created_by", fields: [created_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "transactions_ibfk_3")
+  subscribers_subscribersTotransactions_authorized_by subscribers?         @relation("subscribersTotransactions_authorized_by", fields: [authorized_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "transactions_ibfk_4")
+  service_providers                                   service_providers    @relation(fields: [service_provider_id], references: [id], onUpdate: Restrict, map: "transactions_ibfk_5")
 
   @@index([account_id], map: "account_id")
+  @@index([authorized_by], map: "authorized_by")
+  @@index([created_by], map: "created_by")
   @@index([service_id], map: "service_id")
+  @@index([service_provider_id], map: "service_provider_id")
 }
 
 model users {
@@ -369,18 +379,18 @@ enum services_status {
   Rejected
 }
 
-enum transactions_channel {
-  APPS
-  USSD
-  IB
-  AGENT
-}
-
 enum limits_status {
   Pending
   Active
   Inactive
   Rejected
+}
+
+enum transactions_channel {
+  APPS
+  USSD
+  IB
+  AGENT
 }
 
 enum subscribers_status {

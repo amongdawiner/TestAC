@@ -4,23 +4,24 @@ module.exports = async function (fastify, opts)
 {        
       const transactionOption = 
       {
-        schema: {
+        schema: 
+        {
           body: 
           {
             type: 'object',
-            required: ['amount'],
+            required: ['payload'],
             properties: 
             {
-              amount : { type: 'number' },
+              payload : { type: 'string' },
             },
           },
         },
         onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
-        preValidation: [fastify.CheckAllTransactingEligibility]
+        preValidation: [fastify.CheckTransferGeneralParams, fastify.CheckATransactingAccount, fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
       }
-      fastify.post('/Domestic', transactionOption,  async function (request) 
-      {  
-        //return  fastify.RegisterSubscriber({body : request.body, user: request.user})
+      fastify.post('/DomesticTransfer', transactionOption,  async function (request) 
+      { 
+        return  fastify.DomesticTransfer({body : request.body, user: request.user})
       })
 
 }

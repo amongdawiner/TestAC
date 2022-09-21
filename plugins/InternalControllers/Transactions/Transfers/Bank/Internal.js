@@ -6,122 +6,59 @@ module.exports = fp(async function (fastify, opts)
 {
     const prisma  = await fastify.prisma()
 
-    fastify.decorate("AddInternall", async function(request) 
+    fastify.decorate("InternalTransfer", async function(request) 
     {
       try 
       {
-        let existingCount = await prisma.Internalls.count({where: {status: 'Pending', service_id:request.body.service_id, subscriber_class_id: request.body.subscriber_class_id}})
-        if(existingCount==0)
+        let transactionPayload = JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))
+        let referenceNumber =  await fastify.ReferenceNumber()
+
+        let existingCount = await prisma.transactions.count({where: {status: 'Pending', service_id:parseInt(transactionPayload.service_id), created_by : request.user.id}})
+     
+        if(existingCount>0)// for temporary seeding ...
         {
-            let newInternall = 
+            let newInternallTransfer = 
             {
-                subscriber_class_id : request.body.subscriber_class_id,
-                service_id    : request.body.service_id,
-                daily_Internall   : request.body.daily_Internall,
-                weekly_Internall  : request.body.weekly_Internall != null ? request.body.weekly_Internall :  request.body.daily_Internall*7,
-                monthly_Internall : request.body.monthly_Internall != null ? request.body.monthly_Internall :  request.body.daily_Internall*30,
-                yearly_Internall  : request.body.yearly_Internall != null ? request.body.yearly_Internall :  request.body.daily_Internall*365,
-                created_by    : request.user.id,
+                request_number              : referenceNumber,
+                service_id                  : transactionPayload.service_id,
+                retrieval_reference_number  : transactionPayload.rrn,//if transaction have ref no like INVOICE # etc we can use this field
+                service_provider_id         : transactionPayload.service_provider_id,
+                account_id                  : transactionPayload.source_account_id,
+                destination                 : transactionPayload.destination,
+                amount                      : transactionPayload.amount * Math.random(),
+                narration                   : transactionPayload.narration,
+                nature_of_transaction       : "Dr",
+                channel                     : "APPS",
+                transaction_date            : transactionPayload.transaction_date,
+                created_by                  : request.user.id,
+                authorized_at               : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
+                authorized_by               : request.user.id,
+                status                      : "Completed"
             }
-            let Internall = await prisma.Internalls.create({data:newInternall })
-            return {responseCode: "SUCCESS", message : "New Internall Added Successfully", Internall : Internall}
-          }
-          else
-          {
-              return{responseCode : "UNATTENDED_PENDING", error: "There is a Pending Internall", message:"Kindly request Authorizer to Authorize or Reject Latest Internall Request"};
-          }
-      } catch (err) {
+
+            let transaction = await prisma.transactions.create({data : newInternallTransfer })
+
+            //Deduct float Balance
+            
+            //consume BEM / ESB / FCUB WebService / API and if it is successfully then Update transaction details including status, thirdy party reference no etc ...
+            
+            // Send SMS alert
+
+            if(transactionPayload.save_payee)
+            {
+              // shall be placed in que
+              //save payee information
+            }
+            
+            return {responseCode: "SUCCESS", message : "Transaction Completed Successfully", transaction : transaction}
+        }
+        else
+        {
+            return{responseCode : "DUPLICATE", error: "There are unattended transaction(s)", message:"Kindly wait for sometime before initiating another transfer"};
+        }
+      } catch (err) 
+      {
         return err
       }
     })
-
-    fastify.decorate("GetInternalls", async function(request) {
-        try 
-        {
-          return prisma.Internalls.findMany(
-            { 
-              take: request.body.take != null ? request.body.take : undefined,
-              skip : request.body.skip != null ? request.body.skip : undefined,
-              cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
-              where : 
-              { 
-                subscriber_class_id : request.body.subscriber_class_id != null ? request.body.subscriber_class_id : undefined,
-                service_id : request.body.service_id != null ? request.body.service_id : undefined,
-                status : request.body.status != null ? request.body.status : undefined,
-                created_at : 
-                {
-                  gte : request.body.start_date != null ? new Date(request.body.start_date) : undefined,
-                  lte : request.body.end_date != null ? new Date(request.body.end_date) : undefined,
-                }
-              },
-            orderBy: 
-             {
-              id: 'desc',
-             }
-            })
-         } catch (err) 
-        {
-          return err
-        }
-      })
-  
-
-    fastify.decorate("AuthorizeInternall", async function(request) {
-      try 
-      {
-
-        let thisRecord = await prisma.Internalls.findFirst({where: {status: 'Pending', id:request.body.Internall_id,}})
-
-        if(thisRecord == null)
-        {
-             return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.Internall_id, rowsAffected : 0}
-        }
-
-        let update = await prisma.Internalls.update(
-        {
-              where:
-              {
-                id: request.body.Internall_id,
-              },
-              data: 
-              {
-                status: 'Active',
-                authorized_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
-                authorized_by : request.user.id
-              },
-        })
-        return {responseCode: "SUCCESS", message: "Successfully Authorized", Internall : update}
-      } catch (err) {
-        return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
-      }
-    })
-
-    fastify.decorate("RejectInternall", async function(request) {
-        try 
-        {
-          let thisRecord = await prisma.Internalls.findFirst({where: {status: 'Pending', id:request.body.Internall_id,}})
-  
-          if(thisRecord == null)
-          {
-               return {responseCode : "FAILED", message: "No Pending Record with ID : "+request.body.Internall_id, rowsAffected : 0}
-          }
-  
-          let update = await prisma.Internalls.update(
-          {
-                where:
-                {
-                  id: request.body.Internall_id,
-                },
-                data: 
-                {
-                  status: 'Rejected',
-                  authorized_at : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
-                  authorized_by : request.user.id
-                },
-          })
-          return {responseCode: "SUCCESS", message: "Successfully Rejected", Internall : update}
-        } catch (err) {
-          return {statusCode:err.statusCode, errorCode:err.code, message : (err.code == "P2025" ? "Record Not Found" : err.code)}
-        }
-      })
 })

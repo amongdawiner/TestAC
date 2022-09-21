@@ -33,8 +33,8 @@ Keeping logging history
 check account status before Transaction
 
 
-super json
-services : 
+** sms alert 
+** logs
 [
     {
         id:1,

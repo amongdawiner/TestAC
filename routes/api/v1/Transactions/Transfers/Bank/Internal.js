@@ -17,12 +17,11 @@ module.exports = async function (fastify, opts)
           },
         },
         onRequest: [fastify.AuthenticateAlternativeChannellsCustomer],
-        preValidation: [fastify.CheckATransactingAccount, fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
+        preValidation: [fastify.CheckTransferGeneralParams, fastify.CheckATransactingAccount, fastify.PreventResubmission, fastify.StoreTransactionLog, fastify.CheckFloat, fastify.CheckServiceAvailabilityAndLimit]
       }
-      fastify.post('/Internal', transactionOption,  async function (request) 
+      fastify.post('/InternalTransfer', transactionOption,  async function (request) 
       {  
-        return {message:"Ready for Particular Transaction ...", transaction : JSON.parse(await fastify.DencryptData({cipherText:request.body.payload}))}
-        //return  fastify.RegisterSubscriber({body : request.body, user: request.user})
+        return  fastify.InternalTransfer({body : request.body, user: request.user})
       })
 
 }
