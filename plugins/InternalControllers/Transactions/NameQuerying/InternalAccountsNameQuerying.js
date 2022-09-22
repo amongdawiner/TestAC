@@ -4,7 +4,7 @@ const fp = require('fastify-plugin')
 
 module.exports = fp(async function (fastify, opts) 
 {
-    fastify.decorate("MNONameQuerying", async function(request) 
+    fastify.decorate("InternalAccountsNameQuerying", async function(request) 
     {
         try 
         {
