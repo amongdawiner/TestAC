@@ -11,7 +11,7 @@ module.exports = fp(async function (fastify, opts)
         {
           return prisma.transactions.findMany(
             { 
-              take: request.body.take != null ? request.body.take : undefined,
+              take: request.body.take != null ? request.body.take : 10,
               skip : request.body.skip != null ? request.body.skip : undefined,
               cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
               where : 

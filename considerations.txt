@@ -66,3 +66,27 @@ manage card services
 staff to login with ldap
 
 * adding logs for each Transaction even if it is Balance enquiry
+
+
+* ADDING FX
+
+
+***
+SERVERS 
+ UAT (DB & APPLICATION SERVER)
+ LIVE (DB & APPLICATION SERVER)
+ DR (DB & APPLICATION SERVER)
+
+
+username:     root
+password:     %7l7^ep5x1YP
+
+TZUKAWRAPDIGCS01   22.32.245.88
+TZUKAWRAPDIGCS02   22.32.245.89
+
+TO BE INSTALLED 
+------------------------
+npm 
+pm2 {process management}
+ngix / apache 
+postgres 

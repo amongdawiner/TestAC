@@ -71,4 +71,28 @@ module.exports = fp(async function (fastify, opts)
         combined = combined+""+milliseconds
         return combined     
     })
+
+    fastify.decorate("ValidatePhoneNumber", async function(request, reply) 
+    {
+      try 
+      {
+        let phoneno = /^\d{9}$/;
+        let tel = request.body.phone_number
+       
+        if((tel.toString().match(phoneno)))
+        {
+            return await fastify.FormatPhoneNumber({body : {phone_number : request.body.phone_number}})
+        }
+        return {error : "INVALID_PHONE_NUMBER", message : "Invalid Mobile Phone Number, Kindly Accept 9 digits without 0 or Country Code", example : "766192332 instead of +255766192332"}
+  
+      } catch (error) 
+      {
+        return error 
+      }
+    })
+
+    fastify.decorate("FormatPhoneNumber", async function(request) 
+    {
+      return "255"+request.body.phone_number
+    })
 })

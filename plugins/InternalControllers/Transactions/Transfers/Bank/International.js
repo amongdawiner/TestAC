@@ -17,7 +17,7 @@ module.exports = fp(async function (fastify, opts)
      
         if(existingCount>0)// for temporary seeding ...
         {
-            let newInternallTransfer = 
+            let newInternationalTransfer = 
             {
                 request_number              : referenceNumber,
                 service_id                  : transactionPayload.service_id,
@@ -36,7 +36,7 @@ module.exports = fp(async function (fastify, opts)
                 status                      : "Completed"
             }
 
-            let transaction = await prisma.transactions.create({data : newInternallTransfer })
+            let transaction = await prisma.transactions.create({data : newInternationalTransfer })
             
             //Deduct float Balance
 

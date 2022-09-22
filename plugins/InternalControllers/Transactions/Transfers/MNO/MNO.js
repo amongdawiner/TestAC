@@ -6,7 +6,7 @@ module.exports = fp(async function (fastify, opts)
 {
     const prisma  = await fastify.prisma()
 
-    fastify.decorate("DomesticTransfer", async function(request) 
+    fastify.decorate("MNOTransfer", async function(request) 
     {
       try 
       {
@@ -14,21 +14,28 @@ module.exports = fp(async function (fastify, opts)
         let referenceNumber =  await fastify.ReferenceNumber()
 
         let existingCount = await prisma.transactions.count({where: {status: 'Pending', service_id:parseInt(transactionPayload.service_id), created_by : request.user.id}})
-     
-        if(existingCount>0)// for temporary seeding ...
+        
+        let destination = await fastify.ValidatePhoneNumber({body : {phone_number : transactionPayload.destination}})
+        
+        if(destination.error)
         {
-            let newDomesticTransfer = 
+            return destination
+        }
+        
+        if(existingCount>=0)// for temporary seeding ...
+        {
+            let newMNOTransfer = 
             {
                 request_number              : referenceNumber,
                 service_id                  : transactionPayload.service_id,
                 retrieval_reference_number  : transactionPayload.rrn,
                 service_provider_id         : transactionPayload.service_provider_id,
                 account_id                  : transactionPayload.source_account_id,
-                destination                 : transactionPayload.destination,
+                destination                 : destination,
                 amount                      : transactionPayload.amount * Math.random(),
                 narration                   : transactionPayload.narration,
                 nature_of_transaction       : "Dr",
-                channel                     : "USSD",
+                channel                     : "APPS",
                 transaction_date            : transactionPayload.transaction_date,
                 created_by                  : request.user.id,
                 authorized_at               : new Date(new Date(new Date().toString().split('GMT')[0]+' UTC').toISOString().split('.')[0].replace('T',' ')),
@@ -36,7 +43,7 @@ module.exports = fp(async function (fastify, opts)
                 status                      : "Completed"
             }
 
-            let transaction = await prisma.transactions.create({data : newDomesticTransfer })
+            let transaction = await prisma.transactions.create({data : newMNOTransfer })
 
             //Deduct float Balance
 

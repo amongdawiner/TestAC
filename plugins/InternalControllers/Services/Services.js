@@ -44,12 +44,13 @@ module.exports = fp(async function (fastify, opts)
               cursor: request.body.cursor != null ? {id : request.body.cursor } : undefined,
               where : 
               { 
-                name : request.body.name != null ? request.body.name : undefined,
+                id          : request.body.id != null ? request.body.id : undefined,
+                name        : request.body.name != null ? request.body.name : undefined,
                 common_name : request.body.common_name != null ? request.body.common_name : undefined,
-                category : request.body.category != null ? request.body.category : undefined,
-                code : request.body.code != null ? request.body.code : undefined,
-                status : request.body.status != null ? request.body.status : undefined,
-                created_at : 
+                category    : request.body.category != null ? request.body.category : undefined,
+                code        : request.body.code != null ? request.body.code : undefined,
+                status      : request.body.status != null ? request.body.status : undefined,
+                created_at  : 
                 {
                   gte : request.body.start_date != null ? new Date(request.body.start_date) : undefined,
                   lte : request.body.end_date != null ? new Date(request.body.end_date) : undefined,
